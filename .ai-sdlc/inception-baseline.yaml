@@ -4,7 +4,7 @@ project: ai-cto-cockpit
 created_on: "2026-07-27"
 state: accepted-for-specification
 readiness_verdict: PASS
-application_status: not-started-by-design
+application_status: feature-001-in-progress-through-t005
 
 intent:
   primary_user: technical-founder-or-hands-on-engineering-leader
@@ -88,10 +88,10 @@ artifacts:
     sha256: 802f68488ea4227a87b509bf9a90c07c976657bba184e7aefd010f9dc88fda71
   - path: .ai-sdlc/toolchain.lock.yaml
     owner: lifecycle-governance
-    sha256: e287876db48df6e761306fcc26a33d9e188851171728e3861db25e7cbb05cfa2
+    sha256: 98162533dddfda2dc836e7dd34e3318335fcfb046d9617480ecfd2150f03deb4
   - path: .ai-sdlc/source-manifest.yaml
     owner: provenance-governance
-    sha256: 5ce190d0cbd5b0915f7f8c963fd0de1e8b14ec271ddd092dd05bade81d6c7ba3
+    sha256: 1428d4b7ba25d0310002e2fc5ff69bb64743be284d05c98b634bb5b7d3287b8e
   - path: _bmad-output/project-context.md
     owner: bmad-method
     sha256: 09dae20a6ac018e0cf0979bd8062737de375cc19a4b02f1e986f55814fd70c05

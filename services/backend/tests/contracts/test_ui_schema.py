@@ -4,7 +4,7 @@ import importlib
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from pydantic import ValidationError
@@ -27,15 +27,17 @@ ORDER_INSENSITIVE_ARRAY_KEYS = frozenset(
 )
 
 
-def _semantic_contract(value: Any, *, parent_key: str | None = None) -> Any:
+def _semantic_contract(value: object, *, parent_key: str | None = None) -> object:
     if isinstance(value, dict):
+        mapping = cast(dict[str, object], value)
         return {
             key: _semantic_contract(item, parent_key=key)
-            for key, item in sorted(value.items())
-            if key not in PROSE_KEYS
+            for key, item in sorted(mapping.items())
+            if key not in PROSE_KEYS or parent_key == "properties"
         }
     if isinstance(value, list):
-        items = [_semantic_contract(item) for item in value]
+        sequence = cast(list[object], value)
+        items = [_semantic_contract(item) for item in sequence]
         if parent_key in ORDER_INSENSITIVE_ARRAY_KEYS:
             return sorted(
                 items,
@@ -106,12 +108,31 @@ def test_generated_ui_schema_is_semantically_equivalent_to_feature_contract() ->
     assert _semantic_contract(actual) == _semantic_contract(expected)
 
 
+def test_generated_ui_schema_keeps_the_public_title_property() -> None:
+    schema = cast(
+        dict[str, Any],
+        json.loads(GENERATED_UI_SCHEMA.read_text(encoding="utf-8")),
+    )
+    definitions = cast(dict[str, Any], schema["$defs"])
+    recommendation = cast(
+        dict[str, Any],
+        definitions["recommendationSummary"],
+    )
+    properties = cast(dict[str, Any], recommendation["properties"])
+
+    assert "title" in properties
+    assert "title" in recommendation["required"]
+
+
 def test_ui_envelope_accepts_the_closed_versioned_fixture() -> None:
     model = _ui_envelope_model()
 
     parsed = model.model_validate(_valid_envelope())
 
     assert parsed.model_dump(by_alias=True, mode="json") == _valid_envelope()
+    serialized = json.loads(parsed.model_dump_json())
+    assert serialized == _valid_envelope()
+    assert "schema_version" not in serialized
 
 
 @pytest.mark.parametrize(
@@ -168,3 +189,33 @@ def test_ui_envelope_requires_schema_version() -> None:
     schema = model.model_json_schema(by_alias=True)
     assert "schemaVersion" in schema["required"]
     assert schema["properties"]["schemaVersion"]["const"] == "1.0"
+
+
+def test_ui_envelope_rejects_internal_python_field_names() -> None:
+    model = _ui_envelope_model()
+    payload = _valid_envelope()
+    payload["schema_version"] = payload.pop("schemaVersion")
+
+    with pytest.raises(ValidationError):
+        model.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("field_path", "invalid_value"),
+    [
+        (("component", "optionScores", 0, "score"), "80"),
+        (("actions", 0, "enabled"), 0),
+        (("meta", "eventSequence"), "3"),
+    ],
+)
+def test_ui_envelope_rejects_scalar_type_coercion(
+    field_path: tuple[str | int, ...],
+    invalid_value: object,
+) -> None:
+    model = _ui_envelope_model()
+    payload = _valid_envelope()
+    container = _nested_value(payload, field_path[:-1])
+    container[field_path[-1]] = invalid_value
+
+    with pytest.raises(ValidationError):
+        model.model_validate(payload)

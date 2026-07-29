@@ -46,6 +46,7 @@ services:
       qdrant:
         condition: service_healthy
     environment:
+      ALEMBIC_CONFIG: "/app/services/backend/alembic.ini"
       APP_MODE: "${APP_MODE:-public-demo}"
       DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://ai_cto:ai_cto_demo_only@postgres:5432/ai_cto}"
       QDRANT_URL: "${QDRANT_URL:-http://qdrant:6333}"
@@ -88,6 +89,7 @@ services:
       qdrant:
         condition: service_healthy
     environment:
+      ALEMBIC_CONFIG: "/app/services/backend/alembic.ini"
       APP_MODE: "${APP_MODE:-public-demo}"
       DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://ai_cto:ai_cto_demo_only@postgres:5432/ai_cto}"
       QDRANT_URL: "${QDRANT_URL:-http://qdrant:6333}"

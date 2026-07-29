@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "envelopeMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "eventSequence": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "fixtureVersion": {
+          "const": "walking-skeleton-v1"
+        },
+        "generatedBy": {
+          "const": "deterministic-fixture"
+        },
+        "runId": {
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runId",
+        "eventSequence",
+        "generatedBy",
+        "fixtureVersion"
+      ],
+      "type": "object"
+    },
+    "optionScore": {
+      "additionalProperties": false,
+      "properties": {
+        "optionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "optionId",
+        "score"
+      ],
+      "type": "object"
+    },
+    "recommendationSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "disclaimer": {
+          "maxLength": 240,
+          "minLength": 1,
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "kind": {
+          "const": "recommendation-summary"
+        },
+        "optionScores": {
+          "items": {
+            "$ref": "#/$defs/optionScore"
+          },
+          "maxItems": 8,
+          "minItems": 2,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "rationale": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "selectedOptionId": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "status": {
+          "const": "demonstration"
+        },
+        "title": {
+          "maxLength": 160,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "title",
+        "status",
+        "selectedOptionId",
+        "rationale",
+        "optionScores",
+        "disclaimer"
+      ],
+      "type": "object"
+    },
+    "viewEvidenceAction": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "const": false
+        },
+        "id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "kind": {
+          "const": "view-evidence"
+        },
+        "label": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "label",
+        "enabled"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:ai-cto-cockpit:ui-envelope:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "items": {
+        "$ref": "#/$defs/viewEvidenceAction"
+      },
+      "maxItems": 1,
+      "type": "array"
+    },
+    "component": {
+      "$ref": "#/$defs/recommendationSummary"
+    },
+    "meta": {
+      "$ref": "#/$defs/envelopeMeta"
+    },
+    "schemaVersion": {
+      "const": "1.0"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "component",
+    "actions",
+    "meta"
+  ],
+  "type": "object"
+}

@@ -1,5 +1,5 @@
 schema_version: "1.0"
-status: "bootstrap-planned"
+status: "feature-001-implementation-in-progress"
 inception_baseline: "IB-001"
 authorities:
   product_requirements: "_bmad-output/planning-artifacts/prd.md"
@@ -38,6 +38,7 @@ functional_requirements:
       - "T011"
       - "T012"
       - "T020"
+      - "T021"
       - "T022"
       - "T023"
       - "T028"
@@ -174,9 +175,12 @@ functional_requirements:
     active_tasks:
       - "T002"
       - "T003"
+      - "T009"
       - "T010"
       - "T011"
       - "T012"
+      - "T020"
+      - "T021"
       - "T022"
       - "T023"
       - "T028"
@@ -326,6 +330,7 @@ nonfunctional_requirements:
       - "T001"
       - "T002"
       - "T003"
+      - "T009"
       - "T019"
       - "T021"
       - "T034"
@@ -408,22 +413,46 @@ quality_requirements:
     planned_evidence:
       - "services/backend/tests/contracts/test_ui_schema.py"
       - "apps/web/tests/ui-envelope-contract.test.ts"
+      - "apps/web/tests/recommendation-summary.test.tsx"
       - "apps/web/e2e/walking-skeleton-accessibility.spec.ts"
+      - "evals/feature-001/accessibility-manual-checklist.md"
+      - "evals/results/feature-001/accessibility-manual.md"
   QUALITY-SEC-001:
     title: "AI and workspace security"
     first_feature: "001-walking-skeleton"
+    feature_001_scope: "EPIC-001 relevant portions: workspace isolation, capability denial, controlled UI input, request/proxy boundaries, and telemetry redaction; later feature-owned attack stages remain blocking when introduced."
     scenarios:
+      - "AS-002"
+      - "AS-004"
       - "AS-006"
       - "AS-007"
+      - "AS-008"
     tasks:
+      - "T004"
+      - "T005"
+      - "T006"
+      - "T007"
       - "T011"
       - "T012"
+      - "T016"
+      - "T018"
       - "T020"
       - "T021"
+      - "T022"
+      - "T023"
+      - "T026"
+      - "T027"
     planned_evidence:
+      - "services/backend/tests/contracts/test_ui_schema.py"
+      - "apps/web/tests/ui-envelope-contract.test.ts"
+      - "services/backend/tests/integration/test_run_lifecycle.py"
+      - "apps/web/tests/recommendation-summary.test.tsx"
       - "services/backend/tests/security/test_demo_capabilities.py"
       - "services/backend/tests/security/test_workspace_isolation.py"
       - "services/backend/tests/security/test_telemetry_redaction.py"
+      - "services/backend/tests/security/test_telemetry_metrics.py"
+      - "services/backend/tests/security/test_request_boundaries.py"
+      - "apps/web/tests/security-boundary.test.ts"
   QUALITY-PERF-001:
     title: "Interactive latency"
     first_feature: "001-walking-skeleton"
@@ -436,6 +465,7 @@ quality_requirements:
       - "T033"
     planned_evidence:
       - "evals/feature-001/load_test.js"
+      - "evals/feature-001/quality.yaml"
       - "evals/results/feature-001/manifest.json"
   QUALITY-COST-001:
     title: "Bounded inference spend"
@@ -444,6 +474,7 @@ quality_requirements:
   QUALITY-OPS-001:
     title: "Durability, replay, reconciliation, and deletion"
     first_feature: "001-walking-skeleton"
+    feature_001_scope: "EPIC-001 relevant portions: decision/run/session durability, idempotency, leases, replay, restart, expiry, and reset deletion jobs; outcome, memory, source, blob, backup/restore, and Qdrant reconciliation evidence follows the features that create those states."
     scenarios:
       - "AS-001"
       - "AS-003"
@@ -452,6 +483,7 @@ quality_requirements:
     tasks:
       - "T002"
       - "T003"
+      - "T009"
       - "T014"
       - "T016"
       - "T017"
@@ -481,6 +513,7 @@ acceptance_scenarios:
       - "T001"
       - "T002"
       - "T003"
+      - "T009"
       - "T019"
       - "T021"
       - "T032"
@@ -489,6 +522,7 @@ acceptance_scenarios:
     tests:
       - "tests/e2e/test_compose_readiness.py"
       - "services/backend/tests/integration/test_health.py"
+      - "services/backend/tests/integration/test_migrations.py"
       - "evals/feature-001/load_test.js"
   AS-002:
     title: "Server-derived public-demo configuration"
@@ -497,9 +531,12 @@ acceptance_scenarios:
       - "FR-011"
       - "NFR-002"
       - "NFR-008"
+      - "QUALITY-SEC-001"
     tasks:
       - "T010"
       - "T012"
+      - "T020"
+      - "T021"
       - "T022"
       - "T023"
       - "T028"
@@ -507,7 +544,9 @@ acceptance_scenarios:
       - "T034"
     tests:
       - "services/backend/tests/api/test_config.py"
+      - "services/backend/tests/security/test_request_boundaries.py"
       - "apps/web/tests/config-boundary.test.ts"
+      - "apps/web/tests/security-boundary.test.ts"
       - "apps/web/e2e/walking-skeleton.spec.ts"
   AS-003:
     title: "Versioned decision framing"
@@ -538,6 +577,7 @@ acceptance_scenarios:
       - "NFR-004"
       - "NFR-007"
       - "QUALITY-UI-001"
+      - "QUALITY-SEC-001"
       - "QUALITY-OPS-001"
       - "QUALITY-PERF-001"
     tasks:
@@ -590,6 +630,8 @@ acceptance_scenarios:
     tasks:
       - "T011"
       - "T012"
+      - "T020"
+      - "T021"
       - "T022"
       - "T023"
       - "T024"
@@ -599,7 +641,9 @@ acceptance_scenarios:
       - "T034"
     tests:
       - "services/backend/tests/security/test_demo_capabilities.py"
+      - "services/backend/tests/security/test_request_boundaries.py"
       - "apps/web/tests/config-boundary.test.ts"
+      - "apps/web/tests/security-boundary.test.ts"
       - "apps/web/tests/decision-frame-form.test.tsx"
   AS-007:
     title: "Workspace isolation and redacted observability"
@@ -623,6 +667,7 @@ acceptance_scenarios:
     tests:
       - "services/backend/tests/security/test_workspace_isolation.py"
       - "services/backend/tests/security/test_telemetry_redaction.py"
+      - "services/backend/tests/security/test_telemetry_metrics.py"
       - "apps/web/e2e/walking-skeleton.spec.ts"
   AS-008:
     title: "Contract and accessibility integrity"
@@ -631,6 +676,7 @@ acceptance_scenarios:
       - "NFR-007"
       - "NFR-011"
       - "QUALITY-UI-001"
+      - "QUALITY-SEC-001"
     tasks:
       - "T001"
       - "T004"
@@ -648,7 +694,10 @@ acceptance_scenarios:
       - "services/backend/tests/contracts/test_openapi.py"
       - "services/backend/tests/contracts/test_ui_schema.py"
       - "apps/web/tests/ui-envelope-contract.test.ts"
+      - "apps/web/tests/recommendation-summary.test.tsx"
       - "apps/web/e2e/walking-skeleton-accessibility.spec.ts"
+      - "evals/feature-001/accessibility-manual-checklist.md"
+      - "evals/results/feature-001/accessibility-manual.md"
 
 task_index:
   T001:
@@ -674,19 +723,19 @@ task_index:
   T006:
     stage: "red"
     scenarios: ["AS-008"]
-    verification: "Frontend contract tests fail for absent validator."
+    verification: "Closed parser and malicious-envelope fuzz tests fail."
   T007:
     stage: "green"
     scenarios: ["AS-008"]
-    verification: "Frontend contract tests and checks pass."
+    verification: "Closed parser, malicious-envelope fuzz, and generation checks pass with zero arbitrary execution."
   T008:
     stage: "red"
     scenarios: ["AS-003", "AS-005"]
     verification: "Migration and model invariant tests fail for absent schema."
   T009:
     stage: "green"
-    scenarios: ["AS-003", "AS-005"]
-    verification: "Migration and model invariant tests pass."
+    scenarios: ["AS-001", "AS-003", "AS-005"]
+    verification: "Migration/model invariants and exact Compose migration-head equality pass at 0001_walking_skeleton."
   T010:
     stage: "red"
     scenarios: ["AS-002", "AS-007"]
@@ -729,20 +778,20 @@ task_index:
     verification: "Health and readiness tests fail."
   T020:
     stage: "red"
-    scenarios: ["AS-007"]
-    verification: "Isolation and telemetry redaction tests fail."
+    scenarios: ["AS-002", "AS-006", "AS-007"]
+    verification: "Isolation, allowlisted telemetry/metrics, CORS, proxy-trust, API-size, and pre-body denial tests fail."
   T021:
     stage: "green"
-    scenarios: ["AS-001", "AS-007"]
-    verification: "Readiness, isolation, and redaction tests pass."
+    scenarios: ["AS-001", "AS-002", "AS-006", "AS-007"]
+    verification: "Readiness, isolation, allowlisted telemetry/metrics, CORS, proxy-trust, API-size, and pre-body denial tests pass."
   T022:
     stage: "red"
     scenarios: ["AS-002", "AS-006"]
-    verification: "Web configuration-boundary tests fail."
+    verification: "Web configuration, same-origin proxy, 256 KiB limit, nonced CSP, anti-frame, nosniff, and referrer-policy tests fail."
   T023:
     stage: "green"
     scenarios: ["AS-002", "AS-006"]
-    verification: "Web configuration-boundary tests pass."
+    verification: "Web configuration, same-origin proxy, 256 KiB limit, nonced CSP, anti-frame, nosniff, and referrer-policy tests pass."
   T024:
     stage: "red"
     scenarios: ["AS-003", "AS-006", "AS-008"]
@@ -754,11 +803,11 @@ task_index:
   T026:
     stage: "red"
     scenarios: ["AS-004", "AS-005", "AS-008"]
-    verification: "Run-stream and controlled-component tests fail."
+    verification: "Run-stream, controlled-component, and seven product-owned state tests fail."
   T027:
     stage: "green"
     scenarios: ["AS-004", "AS-005", "AS-008"]
-    verification: "Run-stream and controlled-component tests pass."
+    verification: "Run-stream, controlled-component, and seven product-owned state tests pass without a new envelope kind."
   T028:
     stage: "red"
     scenarios: ["AS-002", "AS-003", "AS-004", "AS-005", "AS-006", "AS-007"]
@@ -770,23 +819,23 @@ task_index:
   T030:
     stage: "red"
     scenarios: ["AS-008"]
-    verification: "Accessibility journey identifies any unmet requirement."
+    verification: "Automated and manual accessibility evidence identifies any state, focus-return, reduced-motion, 200%-zoom, screen-reader, viewport, comparison, announcement, or axe failure."
   T031:
     stage: "green"
     scenarios: ["AS-008"]
-    verification: "Accessibility journey reports zero serious or critical issue."
+    verification: "All automated and manual accessibility checks pass with zero serious or critical issue."
   T032:
     stage: "red"
     scenarios: ["AS-001", "AS-004", "AS-005"]
-    verification: "Feature evaluation fails before latency evidence meets gates."
+    verification: "Reference-Linux evaluation fails until 20 warm-up and at least 200 five-user measured turns meet every latency, 100-event replay, correlation, error, and duplicate gate."
   T033:
     stage: "green"
     scenarios: ["AS-001", "AS-004", "AS-005"]
-    verification: "Feature evaluation passes twice from clean data."
+    verification: "The complete reference-performance gate passes twice from clean data."
   T034:
     stage: "converge"
     scenarios: ["AS-001", "AS-002", "AS-003", "AS-004", "AS-005", "AS-006", "AS-007", "AS-008"]
-    verification: "All quickstart commands pass and no critical inconsistency remains."
+    verification: "make check and every quickstart command pass, with no critical inconsistency remaining."
 
 roadmap_gate:
   rule: >

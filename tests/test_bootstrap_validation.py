@@ -51,6 +51,34 @@ class BootstrapValidatorPresenceTests(unittest.TestCase):
         text = entrypoint.read_text(encoding="utf-8")
         self.assertIn("scripts/verify_traceability.py", text)
 
+    def test_bootstrap_verifiers_share_the_pinned_yaml_version(self) -> None:
+        entrypoint = (
+            PROJECT_ROOT / "scripts" / "verify-bootstrap.sh"
+        ).read_text(encoding="utf-8")
+        validator = (
+            PROJECT_ROOT / "scripts" / "verify_bootstrap.py"
+        ).read_text(encoding="utf-8")
+        traceability = (
+            PROJECT_ROOT / "scripts" / "verify_traceability.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("--with pyyaml==6.0.3", entrypoint)
+        self.assertIn('"PyYAML==6.0.3"', validator)
+        self.assertIn('"PyYAML==6.0.3"', traceability)
+
+    def test_ci_runs_check_with_the_pinned_node_action(self) -> None:
+        workflow = (
+            PROJECT_ROOT / ".github" / "workflows" / "bootstrap-validation.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(
+            "actions/setup-node@"
+            "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+            workflow,
+        )
+        self.assertIn('node-version: "24.18.0"', workflow)
+        self.assertIn("run: make check", workflow)
+
 
 class BootstrapValidatorBehaviorTests(unittest.TestCase):
     def _load_validator(self):
@@ -256,6 +284,12 @@ class BootstrapValidatorBehaviorTests(unittest.TestCase):
         backend = lock["implementation_bootstrap"]["backend"][
             "direct_development_dependencies"
         ]
+        backend_runtime = lock["implementation_bootstrap"]["backend"][
+            "direct_dependencies"
+        ]
+        backend_build = lock["implementation_bootstrap"]["backend"][
+            "build_system"
+        ]
         workspace = lock["implementation_bootstrap"]["workspace"][
             "direct_development_dependencies"
         ]
@@ -276,6 +310,9 @@ class BootstrapValidatorBehaviorTests(unittest.TestCase):
         self.assertTrue(expected_frontend <= set(frontend))
         self.assertTrue(expected_backend <= set(backend))
         self.assertTrue(expected_workspace <= set(workspace))
+        self.assertEqual("9.39.2", frontend["eslint"])
+        self.assertEqual("6.0.3", backend_runtime["pyyaml"])
+        self.assertEqual("0.11.16", backend_build["uv_build"])
 
     def test_rejects_unclassified_shipped_bmad_support_files(self) -> None:
         module = self._load_validator()

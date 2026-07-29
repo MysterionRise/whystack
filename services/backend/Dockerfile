@@ -1,7 +1,6 @@
 FROM python:3.12.13-slim-bookworm
 
 ENV PATH="/app/services/backend/.venv/bin:${PATH}" \
-    PYTHONPATH="/app/services/backend/src" \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -22,6 +21,12 @@ RUN uv sync \
 COPY services/backend/alembic.ini ./
 COPY services/backend/migrations migrations
 COPY services/backend/src src
+
+RUN uv sync \
+    --locked \
+    --no-dev \
+    --no-editable \
+    --python /usr/local/bin/python
 
 RUN useradd --create-home --uid 10001 cockpit
 

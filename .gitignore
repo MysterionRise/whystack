@@ -13,6 +13,7 @@ __pycache__/
 htmlcov/
 .next/
 node_modules/
+*.tsbuildinfo
 coverage/
 dist/
 build/

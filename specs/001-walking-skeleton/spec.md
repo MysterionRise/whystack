@@ -1,7 +1,7 @@
 ---
 feature_id: "001"
 title: "Walking skeleton"
-status: "planned"
+status: "implementation-in-progress"
 inception_baseline: "IB-001"
 bmad_epics:
   - EPIC-001
@@ -39,6 +39,26 @@ This slice proves deployment modes, workspace isolation, canonical persistence,
 contract generation, controlled Generative UI, run durability, replay, and
 redacted observability before real retrieval or model behavior is introduced.
 
+## Quality-gate applicability
+
+EPIC-001 assigns the full `QUALITY-UI-001` and `QUALITY-PERF-001` gates to this
+slice and only the relevant portions of `QUALITY-SEC-001` and
+`QUALITY-OPS-001`.
+
+- `QUALITY-SEC-001` applies here to server-derived workspace isolation,
+  public-demo capability denial, controlled UI input, request/proxy boundaries,
+  and telemetry redaction. Source-ingestion, retrieval, model-output, live
+  connector, export, and memory attack stages remain with their owning features.
+- `QUALITY-OPS-001` applies here to canonical decision/run durability,
+  idempotency, leased jobs, ordered replay, restart recovery, guest-session
+  expiry, and reset deletion jobs. Outcome/memory/source preservation,
+  backup/restore, blob deletion, and canonical-to-Qdrant reconciliation remain
+  with features that create those records and vectors. Qdrant is
+  readiness-only in feature 001.
+
+This allocation follows the accepted EPIC-001 wording; it does not waive a gate
+for any behavior present in this slice.
+
 ## Baseline boundary
 
 - `FR-001`: the API exposes server-derived mode and capabilities; the client
@@ -68,8 +88,9 @@ redacted observability before real retrieval or model behavior is introduced.
 - When `/api/v1/health/live` and `/api/v1/health/ready` are queried
 - Then web, API, and worker report healthy Compose process state
 - And Postgres and Qdrant are reachable inside the isolated Compose network
-- And the database's current Alembic heads exactly equal the repository heads,
-  including the empty head set before the first domain migration exists
+- And the database's current Alembic heads exactly equal the repository heads
+- And before T009 the matching head sets are empty, while after T009 a fresh
+  stack applies migration `0001_walking_skeleton` before reporting readiness
 - And liveness remains distinct from dependency readiness
 - And no provider credential is required for this feature
 
@@ -82,6 +103,11 @@ redacted observability before real retrieval or model behavior is introduced.
 - And it reports uploads, live Git, GitHub, and web connectors as disabled
 - And it never returns a workspace identifier, signing secret, database
   credential, or model-provider credential to browser code
+- And browser traffic uses the same-origin web proxy with a nonced content
+  security policy, `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`,
+  and `Referrer-Policy: no-referrer`
+- And the API accepts only the configured web origin and ignores forwarded
+  origin, host, scheme, and client-address headers from untrusted peers
 
 ### AS-003 — Versioned decision framing
 
@@ -125,6 +151,8 @@ redacted observability before real retrieval or model behavior is introduced.
 - When a guest calls an upload, local Git, GitHub, or web-connector endpoint
 - Then the API returns HTTP 403 with the stable error code
   `capability_disabled`
+- And it decides that denial without reading or parsing the request body,
+  including when `Content-Length` exceeds the ordinary JSON request limit
 - And it creates no source, sync job, blob, vector, outbound network request, or
   background task
 
@@ -134,8 +162,13 @@ redacted observability before real retrieval or model behavior is introduced.
 - When either session requests the other session's decision or run identifier
 - Then the API returns HTTP 404 without revealing whether the identifier exists
 - And database and stream queries contain the server-derived workspace scope
-- And traces contain correlation identifiers, status, duration, and event counts
-  but no decision text, session token, secret, or raw UI payload
+- And logs, traces, and metrics contain only allowlisted route templates,
+  methods, statuses, durations, event counts, run states, and job outcomes
+- And no telemetry signal contains workspace identifiers, decision text,
+  session tokens, secrets, raw UI payloads, or user-authored content
+- And ordinary JSON requests larger than 256 KiB are rejected at both the web
+  proxy and API without parsing or application side effects, using HTTP 413 and
+  stable error code `request_too_large`
 - Given a guest reset committed but its HTTP response was lost
 - When the revoked old cookie retries reset within ten minutes with the same
   idempotency key and normalized request hash
@@ -150,7 +183,19 @@ redacted observability before real retrieval or model behavior is introduced.
 - Then semantic drift causes continuous integration to fail
 - And an unknown `UiEnvelope` version, component kind, action, or property is
   rejected
+- And generated markup, script, URL, prototype, oversize, and recursive
+  envelope payloads fail closed with zero HTML, JavaScript, route, or network
+  action execution
+- And product-owned presentation state handles loading, empty, partial-evidence,
+  abstention, error, reconnect, and completed outcomes without accepting a new
+  model-controlled component kind
 - And the walking-skeleton journey is keyboard operable
+- And focus returns predictably after transient state, reduced motion is
+  respected, the journey remains usable at 200% zoom, comparisons stay
+  semantic, and stream announcements remain meaningful
+- And manual canonical-journey evidence records keyboard-only navigation,
+  reduced motion, 200% zoom, one supported desktop screen reader, and 360,
+  768, 1280, and 1440-pixel viewport checks
 - And automated accessibility checks report no serious or critical violation
 
 ## Functional requirements
@@ -213,8 +258,10 @@ endpoint. Traces to `FR-006`.
 
 The terminal payload must validate against `UiEnvelope` schema version `1.0`.
 The frontend must map its discriminated component kind and action kinds to
-reviewed React implementations and fail closed for unknown input. Traces to
-`FR-006` and `NFR-007`.
+reviewed React implementations and fail closed for unknown input. Loading,
+empty, partial-evidence, abstention, error, reconnect, and completed states are
+product-owned view state around the closed envelope; they do not add component
+kinds or recommendation intelligence. Traces to `FR-006` and `NFR-007`.
 
 ### F-008 — Capability denial
 
@@ -227,8 +274,12 @@ access. Traces to `FR-001`, `FR-011`, `NFR-002`, and `NFR-008`.
 The API must expose separate `/api/v1/health/live` and
 `/api/v1/health/ready` endpoints. Services must emit structured redacted logs,
 metrics, and OpenTelemetry traces correlated by workspace-safe session,
-decision, run, and job identifiers. Traces to `NFR-004`, `NFR-008`, and
-`NFR-009`.
+decision, run, and job identifiers. Telemetry attributes and metric labels use
+an explicit allowlist and never contain workspace IDs or user-authored content.
+The API accepts only the configured web origin, does not trust forwarded
+headers unless the peer is explicitly configured, and rejects ordinary JSON
+bodies larger than 256 KiB before parsing. Traces to `NFR-002`, `NFR-004`,
+`NFR-008`, and `NFR-009`.
 
 ### F-010 — Contract generation
 
@@ -244,18 +295,36 @@ artifacts must match generation output. Traces to `NFR-011`.
   idempotency, lease expiry, and stale-revision tests pass without duplicate
   effects.
 - **Accessibility (`NFR-007`, `QUALITY-UI-001`):** all UI envelopes validate;
-  unknown input fails closed; axe reports zero serious or critical violations
-  for the complete journey.
+  unknown and generated markup, script, URL, prototype, oversize, and recursive
+  payloads fail closed with zero arbitrary execution; every product-owned
+  presentation state is keyboard and screen-reader operable; focus-return,
+  reduced-motion, 200% zoom, semantic comparison, and meaningful stream
+  announcements pass; manual evidence covers one supported desktop screen
+  reader and 360, 768, 1280, and 1440-pixel viewports; axe reports zero serious
+  or critical violations for the complete journey.
 - **Observability (`NFR-008`):** automated capture tests find no decision text,
-  UI payload, tokens, credentials, or environment-secret values in logs and
-  traces.
+  UI payload, workspace ID, tokens, credentials, or environment-secret values
+  in logs, traces, metric labels, or metric attributes.
+- **Request boundary (`NFR-002`, `NFR-008`, `QUALITY-SEC-001`):** hostile
+  origins and untrusted forwarded headers cannot change trusted context;
+  ordinary JSON bodies over 256 KiB fail before parsing at both boundaries;
+  ordinary oversized requests return HTTP 413 with `request_too_large`;
+  public-demo source and connector denials still return
+  `capability_disabled` without reading their bodies.
 - **Portability (`NFR-009`):** the documented quickstart and test commands pass
-  on macOS and Linux with Docker Compose.
+  from clean clones on macOS and the four-vCPU/eight-GiB reference Linux
+  environment with Docker Compose; immutable T034 evidence records both runs.
 - **Contract compatibility (`NFR-011`):** generated-artifact drift and breaking
   changes without a schema-version increment fail continuous integration.
-- **Performance (`QUALITY-PERF-001`):** first useful UI p95 is at most four
-  seconds at five concurrent guest users. The fake-model terminal event p95 is
-  at most five seconds in the same profile.
+- **Performance (`QUALITY-PERF-001`):** on the four-vCPU, eight-GiB reference
+  Linux deployment, five concurrent guests complete at least 200 measured turns
+  after a 20-turn warm-up. Browser timings correlate with server spans; first
+  useful UI p95 is at most four seconds, the feature-local fake terminal target
+  is at most five seconds and therefore also satisfies the accepted
+  completed-recommendation limit of fifteen seconds, non-model API read p95 is
+  at most 300 milliseconds, replay of 100 persisted events p95 is at most one
+  second, and the error rate is below one percent. Duplicate effects remain
+  zero.
 
 ## Domain rules
 
@@ -359,13 +428,13 @@ by name in the data model but do not gain endpoints in this slice.
 | Scenario | Primary automated evidence |
 |---|---|
 | `AS-001` | `services/backend/tests/integration/test_health.py`; `tests/e2e/test_compose_readiness.py` |
-| `AS-002` | `services/backend/tests/api/test_config.py`; `apps/web/tests/config-boundary.test.ts` |
+| `AS-002` | `services/backend/tests/api/test_config.py`; `services/backend/tests/security/test_request_boundaries.py`; `apps/web/tests/config-boundary.test.ts`; `apps/web/tests/security-boundary.test.ts` |
 | `AS-003` | `services/backend/tests/api/test_decisions.py`; `services/backend/tests/property/test_revision_idempotency.py` |
 | `AS-004` | `services/backend/tests/integration/test_run_lifecycle.py`; `apps/web/tests/recommendation-summary.test.tsx` |
 | `AS-005` | `services/backend/tests/integration/test_run_replay.py`; `apps/web/e2e/walking-skeleton.spec.ts` |
-| `AS-006` | `services/backend/tests/security/test_demo_capabilities.py` |
-| `AS-007` | `services/backend/tests/api/test_session_reset.py`; `services/backend/tests/security/test_workspace_isolation.py`; `services/backend/tests/security/test_telemetry_redaction.py` |
-| `AS-008` | `services/backend/tests/contracts/test_openapi.py`; `apps/web/tests/ui-envelope-contract.test.ts`; `apps/web/e2e/walking-skeleton-accessibility.spec.ts` |
+| `AS-006` | `services/backend/tests/security/test_demo_capabilities.py`; `services/backend/tests/security/test_request_boundaries.py` |
+| `AS-007` | `services/backend/tests/api/test_session_reset.py`; `services/backend/tests/security/test_workspace_isolation.py`; `services/backend/tests/security/test_telemetry_redaction.py`; `services/backend/tests/security/test_telemetry_metrics.py` |
+| `AS-008` | `services/backend/tests/contracts/test_openapi.py`; `apps/web/tests/ui-envelope-contract.test.ts`; `apps/web/tests/recommendation-summary.test.tsx`; `apps/web/e2e/walking-skeleton-accessibility.spec.ts`; `evals/results/feature-001/accessibility-manual.md` |
 
 ## Clarification record
 
@@ -378,14 +447,35 @@ by name in the data model but do not gain endpoints in this slice.
   the accepted architecture.
 - Phase A health paths are `/api/v1/health/live` and
   `/api/v1/health/ready`; later health tasks harden these same endpoints.
-- Before T009 introduces migration `0001`, Compose readiness proves migration
-  currency by comparing the database and repository Alembic head sets, which
-  are both empty.
+- Before T009 introduces migration `0001_walking_skeleton`, the preserved Phase
+  A evidence proves that both Alembic head sets are empty. T009 updates fresh
+  Compose startup to apply that migration; the permanent readiness assertion is
+  exact database/repository head equality rather than an empty-set assertion.
 - The Compose-readiness acceptance test owns and cleans up a uniquely named
   Compose project; worker reachability in Phase A means healthy process state,
   not an HTTP or job API.
 - The Node 24 frontend toolchain locks `@types/node` at `24.13.3`; Next.js
   requires those runtime typings for a reproducible production build.
+- Ordinary JSON requests are limited to 256 KiB at both the web proxy and API.
+  Oversized ordinary requests return HTTP 413 with stable code
+  `request_too_large`.
+  Public-demo source and connector routes decide their fixed capability denial
+  before reading a body, so an oversized denied upload cannot consume parser or
+  downstream resources.
+- Loading, empty, partial-evidence, abstention, error, reconnect, and completed
+  are deterministic product-owned view states. They do not expand
+  `UiEnvelope`, authorize arbitrary UI, or add recommendation logic.
+- `QUALITY-UI-001` remains whole in this slice: generated markup, script, URL,
+  prototype, oversize, and recursive payloads are included in the closed-parser
+  fuzz suite, while focus-return and 200% zoom remain blocking browser checks.
+- `QUALITY-PERF-001` uses the accepted four-vCPU/eight-GiB Linux profile, five
+  concurrent users, 20 warm-up turns, and at least 200 completed measured
+  turns. The feature-local five-second fake-terminal target is stricter than
+  the accepted fifteen-second completed-recommendation ceiling; all other
+  accepted latency, replay, correlation, and error-rate gates remain blocking.
+- T034 requires full quickstart and Compose evidence from clean clones on both
+  macOS and the reference Linux environment; a single-platform run cannot
+  satisfy the portability claim.
 - Qdrant participates in readiness to prove deployment topology but is unused by
   business behavior until feature 002.
 - Guest reset revokes access synchronously and performs physical cleanup through

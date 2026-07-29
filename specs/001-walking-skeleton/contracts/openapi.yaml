@@ -85,6 +85,8 @@ paths:
           $ref: "#/components/responses/CapabilityDisabled"
         "409":
           $ref: "#/components/responses/IdempotencyConflict"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
         "422":
           $ref: "#/components/responses/ValidationError"
   /decisions:
@@ -110,6 +112,8 @@ paths:
                 $ref: "#/components/schemas/DecisionView"
         "409":
           $ref: "#/components/responses/IdempotencyConflict"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
         "422":
           $ref: "#/components/responses/ValidationError"
   /decisions/{decisionId}:
@@ -157,6 +161,8 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/RevisionOrIdempotencyConflict"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
         "422":
           $ref: "#/components/responses/ValidationError"
   /decisions/{decisionId}/runs:
@@ -435,6 +441,19 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ApiError"
+    RequestTooLarge:
+      description: Ordinary JSON request exceeds the 256 KiB boundary
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          examples:
+            requestTooLarge:
+              value:
+                code: request_too_large
+                message: The JSON request body exceeds 256 KiB.
+                correlationId: 019c0123-4567-7abc-8def-0123456789ab
+                fields: []
     ValidationError:
       description: Request validation failed
       content:
@@ -1060,6 +1079,7 @@ components:
           const: "1.0"
         payload:
           type: object
+          additionalProperties: true
         createdAt:
           type: string
           format: date-time

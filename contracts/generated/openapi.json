@@ -1,0 +1,1966 @@
+{
+  "components": {
+    "parameters": {
+      "DecisionId": {
+        "in": "path",
+        "name": "decisionId",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid7"
+        }
+      },
+      "ExpectedRevision": {
+        "description": "Expected current integer decision revision",
+        "in": "header",
+        "name": "If-Match",
+        "required": true,
+        "schema": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Unique request key within trusted scope and operation. Ordinary mutations use workspace scope; guest reset replay uses the verified old session fingerprint.\n",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": true,
+        "schema": {
+          "maxLength": 128,
+          "minLength": 8,
+          "pattern": "^[\\x21-\\x7E]+$",
+          "type": "string"
+        }
+      },
+      "RunId": {
+        "in": "path",
+        "name": "runId",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/Uuid7"
+        }
+      }
+    },
+    "responses": {
+      "CapabilityDisabled": {
+        "content": {
+          "application/json": {
+            "examples": {
+              "disabled": {
+                "value": {
+                  "code": "capability_disabled",
+                  "correlationId": "019c0123-4567-7abc-8def-0123456789ab",
+                  "fields": [],
+                  "message": "This capability is not available in public-demo mode."
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Capability is disabled by the server-derived deployment mode"
+      },
+      "CapabilityNotImplemented": {
+        "content": {
+          "application/json": {
+            "examples": {
+              "deferred": {
+                "value": {
+                  "code": "capability_not_implemented",
+                  "correlationId": "019c0123-4567-7abc-8def-0123456789ab",
+                  "fields": [],
+                  "message": "This capability is not implemented in this release."
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Capability is planned for a later feature"
+      },
+      "IdempotencyConflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Idempotency key was reused for a different normalized request"
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "examples": {
+              "resourceNotFound": {
+                "value": {
+                  "code": "resource_not_found",
+                  "correlationId": "019c0123-4567-7abc-8def-0123456789ab",
+                  "fields": [],
+                  "message": "The requested resource was not found."
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Resource is missing or outside the authorized workspace"
+      },
+      "RequestTooLarge": {
+        "content": {
+          "application/json": {
+            "examples": {
+              "requestTooLarge": {
+                "value": {
+                  "code": "request_too_large",
+                  "correlationId": "019c0123-4567-7abc-8def-0123456789ab",
+                  "fields": [],
+                  "message": "The JSON request body exceeds 256 KiB."
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Ordinary JSON request exceeds the 256 KiB boundary"
+      },
+      "RevisionOrIdempotencyConflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Expected revision is stale or idempotency key conflicts"
+      },
+      "ServiceUnavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Required dependency or migration is not ready"
+      },
+      "Unauthorized": {
+        "content": {
+          "application/json": {
+            "examples": {
+              "unauthorized": {
+                "value": {
+                  "code": "session_unauthorized",
+                  "correlationId": "019c0123-4567-7abc-8def-0123456789ab",
+                  "fields": [],
+                  "message": "A valid guest session is required."
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Guest session is missing, invalid, expired, or revoked without the exact unexpired reset replay receipt required by this operation\n"
+      },
+      "ValidationError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Request validation failed"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "correlationId": {
+            "$ref": "#/components/schemas/Uuid7"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "message": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "correlationId",
+          "fields"
+        ],
+        "type": "object"
+      },
+      "BudgetConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "currency": {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "budget"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maximum": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "currency",
+              "maximum"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Capabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "canCreateDecision": {
+            "type": "boolean"
+          },
+          "canReplayRun": {
+            "type": "boolean"
+          },
+          "canResetGuestWorkspace": {
+            "type": "boolean"
+          },
+          "canRunDecision": {
+            "type": "boolean"
+          },
+          "canUpload": {
+            "const": false
+          },
+          "canUseGitHub": {
+            "const": false
+          },
+          "canUseLocalGit": {
+            "const": false
+          },
+          "canUseWeb": {
+            "const": false
+          },
+          "persistentWorkspace": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "canCreateDecision",
+          "canRunDecision",
+          "canReplayRun",
+          "canResetGuestWorkspace",
+          "persistentWorkspace",
+          "canUpload",
+          "canUseLocalGit",
+          "canUseGitHub",
+          "canUseWeb"
+        ],
+        "type": "object"
+      },
+      "CapabilityConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "capability": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "capability"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "capability"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Constraint": {
+        "discriminator": {
+          "mapping": {
+            "budget": "#/components/schemas/BudgetConstraint",
+            "capability": "#/components/schemas/CapabilityConstraint",
+            "deadline": "#/components/schemas/DeadlineConstraint",
+            "deployment-mode": "#/components/schemas/DeploymentModeConstraint",
+            "forbidden-vendor": "#/components/schemas/ForbiddenVendorConstraint",
+            "license": "#/components/schemas/LicenseConstraint",
+            "residency": "#/components/schemas/ResidencyConstraint"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BudgetConstraint"
+          },
+          {
+            "$ref": "#/components/schemas/DeadlineConstraint"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityConstraint"
+          },
+          {
+            "$ref": "#/components/schemas/ForbiddenVendorConstraint"
+          },
+          {
+            "$ref": "#/components/schemas/LicenseConstraint"
+          },
+          {
+            "$ref": "#/components/schemas/ResidencyConstraint"
+          },
+          {
+            "$ref": "#/components/schemas/DeploymentModeConstraint"
+          }
+        ]
+      },
+      "ConstraintBase": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "hard",
+              "advisory"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "severity"
+        ],
+        "type": "object"
+      },
+      "CriterionInput": {
+        "additionalProperties": false,
+        "properties": {
+          "enteredWeight": {
+            "$ref": "#/components/schemas/EnteredWeight"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "enteredWeight"
+        ],
+        "type": "object"
+      },
+      "CriterionView": {
+        "additionalProperties": false,
+        "properties": {
+          "enteredWeight": {
+            "$ref": "#/components/schemas/EnteredWeight"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "normalizedWeight": {
+            "$ref": "#/components/schemas/NormalizedWeight"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "enteredWeight",
+          "normalizedWeight"
+        ],
+        "type": "object"
+      },
+      "DeadlineConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "format": "date",
+                "type": "string"
+              },
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "deadline"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "date"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "DecisionFrameInput": {
+        "additionalProperties": false,
+        "properties": {
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/Constraint"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "context": {
+            "maxLength": 10000,
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionInput"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionOption"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "type": "array"
+          },
+          "question": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": "1.0"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "question",
+          "context",
+          "options",
+          "criteria",
+          "constraints"
+        ],
+        "type": "object"
+      },
+      "DecisionFrameView": {
+        "additionalProperties": false,
+        "properties": {
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/Constraint"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "context": {
+            "maxLength": 10000,
+            "type": "string"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionView"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionOption"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "type": "array"
+          },
+          "question": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": "1.0"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "question",
+          "context",
+          "options",
+          "criteria",
+          "constraints"
+        ],
+        "type": "object"
+      },
+      "DecisionOption": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description"
+        ],
+        "type": "object"
+      },
+      "DecisionView": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currentRevision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "frame": {
+            "$ref": "#/components/schemas/DecisionFrameView"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Uuid7"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "currentRevision",
+          "frame",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "DeploymentModeConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "allowedModes": {
+                "items": {
+                  "enum": [
+                    "managed",
+                    "self-hosted",
+                    "on-device"
+                  ],
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "deployment-mode"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "allowedModes"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "EnteredWeight": {
+        "examples": [
+          "1",
+          "0.12500000",
+          "9999999999.99999999"
+        ],
+        "maxLength": 19,
+        "minLength": 1,
+        "not": {
+          "pattern": "^0\\.0{1,8}$"
+        },
+        "pattern": "^(?:0\\.[0-9]{1,8}|[1-9][0-9]{0,9}(?:\\.[0-9]{1,8})?)$",
+        "type": "string"
+      },
+      "FieldError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "code"
+        ],
+        "type": "object"
+      },
+      "ForbiddenVendorConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "forbidden-vendor"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              },
+              "vendor": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "vendor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "LicenseConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "allowedSpdx": {
+                "items": {
+                  "maxLength": 80,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "license"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "allowedSpdx"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "Liveness": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "live"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "NormalizedWeight": {
+        "examples": [
+          "33.3334"
+        ],
+        "pattern": "^(?:100\\.0000|(?:0|[1-9][0-9]?)\\.[0-9]{4})$",
+        "readOnly": true,
+        "type": "string"
+      },
+      "OptionScore": {
+        "additionalProperties": false,
+        "properties": {
+          "optionId": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "score": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "optionId",
+          "score"
+        ],
+        "type": "object"
+      },
+      "Readiness": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "additionalProperties": {
+              "enum": [
+                "ready",
+                "not-ready"
+              ],
+              "type": "string"
+            },
+            "required": [
+              "migrations",
+              "postgres",
+              "qdrant"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "not-ready"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "type": "object"
+      },
+      "RecommendationSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "disclaimer": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "kind": {
+            "const": "recommendation-summary"
+          },
+          "optionScores": {
+            "items": {
+              "$ref": "#/components/schemas/OptionScore"
+            },
+            "maxItems": 8,
+            "minItems": 2,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "rationale": {
+            "maxLength": 1200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "selectedOptionId": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "status": {
+            "const": "demonstration"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "title",
+          "status",
+          "selectedOptionId",
+          "rationale",
+          "optionScores",
+          "disclaimer"
+        ],
+        "type": "object"
+      },
+      "ResetSessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "guestExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "resetAccepted": {
+            "const": true
+          }
+        },
+        "required": [
+          "resetAccepted",
+          "guestExpiresAt"
+        ],
+        "type": "object"
+      },
+      "ResidencyConstraint": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintBase"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "allowedCountries": {
+                "items": {
+                  "pattern": "^[A-Z]{2}$",
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "id": {
+                "$ref": "#/components/schemas/Slug"
+              },
+              "kind": {
+                "const": "residency"
+              },
+              "label": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "severity": {
+                "enum": [
+                  "hard",
+                  "advisory"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "severity",
+              "allowedCountries"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "RunCompletedEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunEventBase"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "run.completed"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/RunCompletedPayload"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "RunCompletedPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "completed"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "RunEvent": {
+        "discriminator": {
+          "mapping": {
+            "run.completed": "#/components/schemas/RunCompletedEvent",
+            "run.failed": "#/components/schemas/RunFailedEvent",
+            "run.queued": "#/components/schemas/RunQueuedEvent",
+            "run.started": "#/components/schemas/RunStartedEvent",
+            "ui.envelope": "#/components/schemas/UiEnvelopeEvent"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RunQueuedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/RunStartedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/UiEnvelopeEvent"
+          },
+          {
+            "$ref": "#/components/schemas/RunCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/RunFailedEvent"
+          }
+        ]
+      },
+      "RunEventBase": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "run.queued",
+              "run.started",
+              "ui.envelope",
+              "run.completed",
+              "run.failed"
+            ],
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "runId": {
+            "$ref": "#/components/schemas/Uuid7"
+          },
+          "schemaVersion": {
+            "const": "1.0"
+          },
+          "sequence": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "kind",
+          "schemaVersion",
+          "payload",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "RunFailedEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunEventBase"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "run.failed"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/RunFailurePayload"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "RunFailurePayload": {
+        "additionalProperties": false,
+        "properties": {
+          "errorCode": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "status",
+          "errorCode"
+        ],
+        "type": "object"
+      },
+      "RunQueuedEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunEventBase"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "run.queued"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/RunQueuedPayload"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "RunQueuedPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "queued"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "RunStartedEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunEventBase"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "run.started"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/RunStartedPayload"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "RunStartedPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "running"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "RunView": {
+        "additionalProperties": false,
+        "properties": {
+          "completedAt": {
+            "oneOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decisionId": {
+            "$ref": "#/components/schemas/Uuid7"
+          },
+          "decisionRevision": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "errorCode": {
+            "oneOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fixtureVersion": {
+            "const": "walking-skeleton-v1"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Uuid7"
+          },
+          "lastEventSequence": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "startedAt": {
+            "oneOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "decisionId",
+          "decisionRevision",
+          "status",
+          "lastEventSequence",
+          "fixtureVersion",
+          "createdAt",
+          "startedAt",
+          "completedAt",
+          "errorCode"
+        ],
+        "type": "object"
+      },
+      "RuntimeConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "apiVersion": {
+            "const": "v1"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/Capabilities"
+          },
+          "guestExpiresAt": {
+            "oneOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mode": {
+            "enum": [
+              "public-demo",
+              "local-data"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "apiVersion",
+          "mode",
+          "capabilities",
+          "guestExpiresAt"
+        ],
+        "type": "object"
+      },
+      "Slug": {
+        "maxLength": 64,
+        "minLength": 1,
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "UiEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/ViewEvidenceAction"
+            },
+            "maxItems": 1,
+            "type": "array"
+          },
+          "component": {
+            "$ref": "#/components/schemas/RecommendationSummary"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/UiEnvelopeMeta"
+          },
+          "schemaVersion": {
+            "const": "1.0"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "component",
+          "actions",
+          "meta"
+        ],
+        "type": "object"
+      },
+      "UiEnvelopeEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RunEventBase"
+          },
+          {
+            "properties": {
+              "kind": {
+                "const": "ui.envelope"
+              },
+              "payload": {
+                "$ref": "#/components/schemas/UiEnvelope"
+              }
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "UiEnvelopeMeta": {
+        "additionalProperties": false,
+        "properties": {
+          "eventSequence": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "fixtureVersion": {
+            "const": "walking-skeleton-v1"
+          },
+          "generatedBy": {
+            "const": "deterministic-fixture"
+          },
+          "runId": {
+            "$ref": "#/components/schemas/Uuid7"
+          }
+        },
+        "required": [
+          "runId",
+          "eventSequence",
+          "generatedBy",
+          "fixtureVersion"
+        ],
+        "type": "object"
+      },
+      "Uuid7": {
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+        "type": "string"
+      },
+      "ViewEvidenceAction": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "const": false
+          },
+          "id": {
+            "$ref": "#/components/schemas/Slug"
+          },
+          "kind": {
+            "const": "view-evidence"
+          },
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label",
+          "enabled"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "guestSession": {
+        "description": "Opaque signed guest-session cookie required for public-demo application operations. It is absent in credential-free local-data mode; the top-level empty security alternative represents only that server-selected profile, not an anonymous public-demo bypass.\n",
+        "in": "cookie",
+        "name": "ai_cto_guest",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Binding feature-001 contract for server-derived deployment configuration, versioned decisions, durable deterministic runs, controlled UI events, and replay. The server derives workspace scope from trusted session context.\n",
+    "title": "AI CTO Cockpit Walking Skeleton API",
+    "version": "0.1.0"
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "openapi": "3.1.0",
+  "paths": {
+    "/config": {
+      "get": {
+        "operationId": "getRuntimeConfig",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeConfig"
+                }
+              }
+            },
+            "description": "Runtime configuration; may establish a signed guest cookie",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Opaque HttpOnly guest session cookie in public-demo mode",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [],
+        "summary": "Return server-derived mode and capabilities",
+        "tags": [
+          "runtime"
+        ]
+      }
+    },
+    "/connectors/{connectorKind}/sync": {
+      "post": {
+        "description": "Returns capability_disabled in public-demo mode and capability_not_implemented in local-data mode during feature 001.\n",
+        "operationId": "denyOrReportConnectorCapability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connectorKind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "local-git",
+                "github",
+                "web"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "403": {
+            "$ref": "#/components/responses/CapabilityDisabled"
+          },
+          "501": {
+            "$ref": "#/components/responses/CapabilityNotImplemented"
+          }
+        },
+        "summary": "Reserved live-connector boundary",
+        "tags": [
+          "demo-boundary"
+        ]
+      }
+    },
+    "/decisions": {
+      "post": {
+        "operationId": "createDecision",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionFrameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionView"
+                }
+              }
+            },
+            "description": "Decision created"
+          },
+          "409": {
+            "$ref": "#/components/responses/IdempotencyConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestTooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "summary": "Create a decision with immutable revision 1",
+        "tags": [
+          "decisions"
+        ]
+      }
+    },
+    "/decisions/{decisionId}": {
+      "get": {
+        "operationId": "getDecision",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionView"
+                }
+              }
+            },
+            "description": "Current decision"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "summary": "Return the current authorized decision revision",
+        "tags": [
+          "decisions"
+        ]
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DecisionId"
+        }
+      ]
+    },
+    "/decisions/{decisionId}/revisions": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DecisionId"
+        }
+      ],
+      "post": {
+        "operationId": "reviseDecision",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ExpectedRevision"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionFrameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionView"
+                }
+              }
+            },
+            "description": "Revision appended"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/RevisionOrIdempotencyConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestTooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "summary": "Append an immutable decision revision",
+        "tags": [
+          "decisions"
+        ]
+      }
+    },
+    "/decisions/{decisionId}/runs": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/DecisionId"
+        }
+      ],
+      "post": {
+        "operationId": "createRun",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ExpectedRevision"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Run persisted and queued",
+            "headers": {
+              "Location": {
+                "description": "Relative URL of the run snapshot",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/RevisionOrIdempotencyConflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "summary": "Persist and dispatch a deterministic run for the current revision",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Liveness"
+                }
+              }
+            },
+            "description": "Process is live"
+          }
+        },
+        "security": [],
+        "summary": "Report API process liveness",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            },
+            "description": "Dependencies and migration state are ready"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            },
+            "description": "One or more readiness checks failed"
+          }
+        },
+        "security": [],
+        "summary": "Report migration and dependency readiness",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/runs/{runId}": {
+      "get": {
+        "operationId": "getRun",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Run snapshot"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "summary": "Return an authorized durable run snapshot",
+        "tags": [
+          "runs"
+        ]
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RunId"
+        }
+      ]
+    },
+    "/runs/{runId}/events": {
+      "get": {
+        "operationId": "streamRunEvents",
+        "parameters": [
+          {
+            "description": "Last acknowledged sequence when Last-Event-ID is absent",
+            "in": "query",
+            "name": "afterSequence",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Standard SSE resume sequence; takes precedence over query value",
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Server-sent event stream. Each event id is its persisted sequence; data is a RunEvent JSON document. A comment heartbeat is sent every fifteen seconds while waiting.\n",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-cache, no-transform",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "summary": "Stream persisted events after an acknowledged sequence",
+        "tags": [
+          "runs"
+        ]
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RunId"
+        }
+      ]
+    },
+    "/session/reset": {
+      "post": {
+        "description": "The first accepted call atomically creates the replacement session, revokes the old session, queues old-overlay deletion, and writes a ten-minute replay receipt. During that window only this route accepts the cryptographically valid revoked old cookie, and only when its fingerprint, Idempotency-Key, and normalized request hash match the receipt. Such a retry returns the original body and exact Set-Cookie value. Other uses of the revoked cookie are unauthorized.\n",
+        "operationId": "resetGuestSession",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetSessionResponse"
+                }
+              }
+            },
+            "description": "Previous session revoked and scoped deletion queued, or exact replay of that original accepted response\n",
+            "headers": {
+              "Set-Cookie": {
+                "description": "New opaque HttpOnly guest session cookie; an idempotent retry reproduces the exact original header value\n",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CapabilityDisabled"
+          },
+          "409": {
+            "$ref": "#/components/responses/IdempotencyConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/RequestTooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "summary": "Revoke the current guest overlay and establish a new one",
+        "tags": [
+          "runtime"
+        ]
+      }
+    },
+    "/sources/uploads": {
+      "post": {
+        "description": "Returns capability_disabled in public-demo mode and capability_not_implemented in local-data mode during feature 001.\n",
+        "operationId": "denyOrReportUploadCapability",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "403": {
+            "$ref": "#/components/responses/CapabilityDisabled"
+          },
+          "501": {
+            "$ref": "#/components/responses/CapabilityNotImplemented"
+          }
+        },
+        "summary": "Reserved upload boundary",
+        "tags": [
+          "demo-boundary"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "guestSession": []
+    },
+    {}
+  ],
+  "servers": [
+    {
+      "description": "Next.js-proxied application API",
+      "url": "/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "runtime"
+    },
+    {
+      "name": "decisions"
+    },
+    {
+      "name": "runs"
+    },
+    {
+      "name": "demo-boundary"
+    },
+    {
+      "name": "health"
+    }
+  ],
+  "x-runtime-security": {
+    "local-data": "No guest cookie is issued or required. The single local workspace is derived from trusted server configuration, and public-demo-only capabilities return capability_disabled.\n",
+    "public-demo": "GET /config and health probes are unauthenticated. /config establishes the signed guest cookie; application operations then require that cookie, except the narrowly specified reset-replay use of a verified revoked cookie.\n"
+  }
+}

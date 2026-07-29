@@ -5,10 +5,9 @@ workspace. It helps a technical founder frame a decision, inspect relevant
 project evidence, compare viable options, record an outcome, and see how that
 outcome changes a later recommendation.
 
-This directory is the copy-ready planning root for the future standalone
-`ai-cto-cockpit` repository. It intentionally contains no application
-implementation. BMAD owns the accepted product, experience, architecture, and
-quality baseline; Spec Kit owns every implementation slice.
+This repository is the active implementation workspace. BMAD owns the accepted
+product, experience, architecture, and quality baseline; Spec Kit owns every
+implementation slice.
 
 ## Product promise
 
@@ -43,88 +42,74 @@ why the second recommendation changed.
 The complete ownership and change-control rules live in
 [`.ai-sdlc/WORKFLOW.md`](.ai-sdlc/WORKFLOW.md).
 
-## Planned system
+## Current walking skeleton
 
-The target system uses:
+Feature `001-walking-skeleton` currently provides a process-only Compose
+topology:
 
-- Next.js, React, CopilotKit, and AG-UI for the controlled decision workspace;
-- FastAPI, Pydantic, and an explicit LangGraph workflow for orchestration;
-- PostgreSQL as the system of record and durable job/outbox store;
-- Qdrant as a rebuildable vector index;
-- an OpenRouter-compatible provider adapter for hosted inference;
-- a separate Python worker for ingestion, indexing, and memory consolidation;
-- Docker Compose as the common local and single-VM deployment contract.
+- a Next.js web process with a health endpoint;
+- a FastAPI process with separate liveness and dependency-readiness endpoints;
+- a non-HTTP Python worker process with a process health check;
+- PostgreSQL as the canonical store;
+- Qdrant as a derived, rebuildable store that is readiness-only in feature 001;
+- canonical Pydantic public contracts with deterministic checked OpenAPI and
+  controlled-UI JSON Schema artifacts;
+- isolated Compose networks and persistent service volumes.
 
-The system has two deployment profiles:
+No retrieval, provider calls, recommendation intelligence, long-term memory,
+live connectors, or model-generated executable UI are implemented in this
+slice. Provider credentials are not required.
 
-- **Public demo:** a fixed synthetic corpus, signed guest workspace, disabled
-  uploads and live connectors, a 24-hour overlay, reset control, and strict
-  cost/rate limits.
-- **Local-data mode:** persistent local stores and read-only connectors for
-  repositories, documents, GitHub, and bounded web sources. Retrieved context
-  may be sent to the configured remote model provider; the UI must state this
-  before activation.
+The current Spec Kit status is:
 
-## Copy into a fresh repository
+- T001–T003 are complete: locked workspace, preserved readiness RED evidence,
+  and the GREEN Compose topology.
+- T004–T005 are complete: preserved contract-generation RED evidence,
+  fail-closed canonical Pydantic contracts, and deterministic generated
+  artifacts.
+- T006 is the next unstarted task. The T008 persistence lane is also eligible
+  only after review under the explicit parallel-work boundary.
 
-Prerequisites are Git, `rsync`, and `uv`. From the root of this course
-collection, the following block creates a sibling repository, preserves hidden
-framework directories, validates the copy, and makes the initial commit when a
-Git author identity is already configured. It runs in a subshell, fails on the
-first error, and refuses to copy into any path that already exists:
+## Developer workflow
+
+Use the versions pinned in [`.node-version`](.node-version),
+[`.python-version`](.python-version), and
+[`.ai-sdlc/toolchain.lock.yaml`](.ai-sdlc/toolchain.lock.yaml). Docker Desktop
+or another Docker Compose v2 environment is required for the topology test.
+
+Install only from committed locks:
 
 ```bash
-(
-  set -eu
-  source_dir="experiments/ai-cto-cockpit"
-  target_dir="../ai-cto-cockpit"
-
-  [ -d "$source_dir" ] || {
-    printf 'Source packet not found: %s\n' "$source_dir" >&2
-    exit 1
-  }
-  if [ -e "$target_dir" ]; then
-    printf 'Refusing to merge into existing target: %s\n' "$target_dir" >&2
-    exit 1
-  fi
-
-  mkdir -- "$target_dir"
-  rsync -a --exclude '__pycache__/' --exclude '*.pyc' \
-    "$source_dir/" "$target_dir/"
-  cd "$target_dir"
-  git init
-  git symbolic-ref HEAD refs/heads/main
-  ./scripts/verify-bootstrap.sh
-  git add .
-  if git config user.name >/dev/null 2>&1 &&
-    git config user.email >/dev/null 2>&1; then
-    git commit -m "Bootstrap AI CTO Cockpit"
-  else
-    printf '%s\n' \
-      'Packet verified and staged; configure your Git identity, then commit.'
-  fi
-)
+make install
 ```
 
-If this directory is already the root of the fresh repository, start at
-`git init` followed by `git symbolic-ref HEAD refs/heads/main`. The verifier
-runs its unit suite, validates all authored
-JSON, JSONL, and YAML, checks every evaluation case against Draft 2020-12 JSON
-Schema, resolves evidence excerpts into the synthetic corpus, verifies
-framework versions and baseline hashes, confirms active templates/workflows and
-runtime pins, scans project-authored files for high-confidence secrets, and
-checks reciprocal end-to-end traceability.
+Run the packet and static quality gates:
 
-The framework adapters are already installed for Codex and Claude. Begin with
-`speckit-analyze` against `specs/001-walking-skeleton/`, resolve any critical
-inconsistency, execute T001, and then preserve the recorded RED result for T002
-before implementing T003. Do not rerun a BMAD implementation loop. A bounded
-first-task prompt is ready to paste from
-[`BOOTSTRAP_PROMPT.md`](BOOTSTRAP_PROMPT.md).
+```bash
+./scripts/verify-bootstrap.sh
+make check
+make contracts-check
+```
+
+`make contracts-check` verifies both semantic equivalence with the binding
+feature contracts and byte-for-byte generated-artifact drift.
+
+Inspect pinned tool versions and run the self-cleaning Compose acceptance test:
+
+```bash
+make toolchain-check
+make test-compose-readiness
+```
+
+`make check` runs Ruff linting and formatting checks over backend source and
+tests, strict Pyright including backend tests, and the frontend ESLint and
+TypeScript checks. The Compose test creates a unique project, builds and waits
+for every process, verifies PostgreSQL/Alembic and Qdrant readiness, and removes
+only that project's containers and volumes.
 
 ## Start here
 
-Before implementation, read these artifacts in order:
+Before a new explicitly scoped Spec Kit batch, read these artifacts in order:
 
 1. [`_bmad-output/planning-artifacts/product-brief.md`](_bmad-output/planning-artifacts/product-brief.md)
 2. [`_bmad-output/planning-artifacts/prd.md`](_bmad-output/planning-artifacts/prd.md)
@@ -133,11 +118,12 @@ Before implementation, read these artifacts in order:
 5. [`_bmad-output/planning-artifacts/implementation-readiness.md`](_bmad-output/planning-artifacts/implementation-readiness.md)
 6. [`_bmad-output/test-artifacts/ai-quality-contract.md`](_bmad-output/test-artifacts/ai-quality-contract.md)
 7. The Spec Kit constitution and `specs/001-walking-skeleton/`.
-8. [`BOOTSTRAP_PROMPT.md`](BOOTSTRAP_PROMPT.md) for the first coding task.
+8. The active task range in
+   [`specs/001-walking-skeleton/tasks.md`](specs/001-walking-skeleton/tasks.md).
 
-Run the repository bootstrap verifier before accepting the copied packet. The
-first production change must begin with the first failing acceptance test from
-the walking-skeleton task list.
+Run the repository bootstrap verifier before each batch, preserve the named RED
+evidence, and stop after the authorized task range. Do not run a BMAD
+implementation loop for this feature.
 
 ## Licensing and provenance
 

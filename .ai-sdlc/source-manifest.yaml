@@ -77,6 +77,26 @@ packet_artifacts:
     redistribution: allowed
     notes:
       - exact-upstream-attribution-is-recorded-under-framework_references
+  - id: SRC-PACKET-007
+    paths:
+      - "Makefile"
+      - ".dockerignore"
+      - ".node-version"
+      - ".python-version"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "pyrightconfig.json"
+      - "apps/"
+      - "contracts/"
+      - "services/"
+      - "infra/"
+    origin: project-authored-runtime-tooling-and-application-skeleton
+    license: MIT
+    redistribution: allowed
+    notes:
+      - PostgreSQL-is-canonical-and-Qdrant-is-derived
+      - feature-001-excludes-retrieval-model-calls-memory-and-live-connectors
 
 learning_inputs:
   - id: SRC-LEARN-001

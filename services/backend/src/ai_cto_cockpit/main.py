@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-from pathlib import Path
 from urllib.parse import urlsplit
 
 from alembic.config import Config
@@ -14,9 +13,6 @@ from sqlalchemy import Connection, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import create_async_engine
 
-BACKEND_ROOT = Path(__file__).resolve().parents[2]
-ALEMBIC_CONFIG = BACKEND_ROOT / "alembic.ini"
-
 app = FastAPI(title="AI CTO Cockpit")
 
 
@@ -25,7 +21,7 @@ def _database_heads(connection: Connection) -> tuple[str, ...]:
 
 
 def _repository_heads() -> tuple[str, ...]:
-    config = Config(str(ALEMBIC_CONFIG))
+    config = Config(os.environ.get("ALEMBIC_CONFIG", "alembic.ini"))
     return tuple(ScriptDirectory.from_config(config).get_heads())
 
 

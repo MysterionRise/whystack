@@ -1,5 +1,5 @@
 schema_version: 1
-locked_on: "2026-07-27"
+locked_on: "2026-07-29"
 policy:
   upgrade_mode: isolated-reviewed-change
   community_extensions: disabled
@@ -65,13 +65,15 @@ tools:
       - convergence
 implementation_bootstrap:
   pin_kind: compatibility-baseline
-  status: planning-pin-set
-  verified_on: "2026-07-27"
+  status: implementation-in-progress
+  verified_on: "2026-07-29"
+  maintenance_record: ".ai-sdlc/maintenance/IM-001-tooling-compatibility.md"
   selection_notes:
     - Node 24 is the active Krypton LTS line and satisfies pnpm 11 and Next.js 16 engine requirements.
     - Python 3.12 follows the accepted walking-skeleton architecture.
     - Only stable releases are selected; SQLAlchemy remains on stable 2.0 rather than the 2.1 prerelease line.
     - Zod 3.25 is retained because the AG-UI 0.0.57 client resolves the Zod 3 API.
+    - ESLint 9.39.2 preserves compatibility with the pinned Next.js 16 CLI configuration and rules.
   policy:
     - These are explicit bootstrap pins, not floating latest-version ranges.
     - Materialize them in package manifests and committed lockfiles during T001.
@@ -117,10 +119,12 @@ implementation_bootstrap:
       vitest: "4.1.10"
       "@playwright/test": "1.62.0"
       "@axe-core/playwright": "4.12.1"
-      eslint: "10.8.0"
+      eslint: "9.39.2"
       eslint-config-next: "16.2.12"
   backend:
     registry: "https://pypi.org/simple/"
+    build_system:
+      uv_build: "0.11.16"
     direct_dependencies:
       fastapi: "0.140.1"
       pydantic: "2.13.4"
@@ -129,6 +133,7 @@ implementation_bootstrap:
       sqlalchemy: "2.0.51"
       alembic: "1.18.5"
       "psycopg[binary]": "3.3.4"
+      pyyaml: "6.0.3"
       uvicorn: "0.51.0"
     direct_development_dependencies:
       pytest: "9.1.1"
@@ -149,7 +154,7 @@ bootstrap_validation:
   python: "3.13"
   uv: "0.11.16"
   dependencies:
-    PyYAML: "6.0.2"
+    PyYAML: "6.0.3"
     jsonschema: "4.25.1"
     openapi-spec-validator: "0.7.2"
   github_actions:
@@ -159,6 +164,9 @@ bootstrap_validation:
     astral_setup_uv:
       version: "8.1.0"
       commit: "08807647e7069bb48b6ef5acd8ec9567f424441b"
+    actions_setup_node:
+      version: "6.4.0"
+      commit: "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e"
 handoff:
   baseline_id: IB-001
   direction: bmad-to-spec-kit

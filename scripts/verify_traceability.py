@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#   "PyYAML==6.0.2",
+#   "PyYAML==6.0.3",
 # ]
 # ///
 """Verify BMAD-to-Spec-Kit requirement traceability."""

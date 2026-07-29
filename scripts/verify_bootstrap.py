@@ -4,7 +4,7 @@
 # dependencies = [
 #   "jsonschema==4.25.1",
 #   "openapi-spec-validator==0.7.2",
-#   "PyYAML==6.0.2",
+#   "PyYAML==6.0.3",
 # ]
 # ///
 """Validate the portable AI CTO Cockpit bootstrap packet."""
@@ -1450,7 +1450,8 @@ def validate_sdlc_wiring(root: Path) -> list[ValidationIssue]:
             required_pins[f"frontend.dev.{name}"] = (
                 frontend_development.get(name)
             )
-        backend = bootstrap.get("backend", {}).get(
+        backend_configuration = bootstrap.get("backend", {})
+        backend = backend_configuration.get(
             "direct_dependencies",
             {},
         )
@@ -1462,12 +1463,15 @@ def validate_sdlc_wiring(root: Path) -> list[ValidationIssue]:
             "sqlalchemy",
             "alembic",
             "psycopg[binary]",
+            "pyyaml",
             "uvicorn",
         ):
             required_pins[f"backend.{name}"] = backend.get(name)
+        required_pins["backend.build_system.uv_build"] = (
+            backend_configuration.get("build_system", {}).get("uv_build")
+        )
         backend_development = (
-            bootstrap.get("backend", {})
-            .get("direct_development_dependencies", {})
+            backend_configuration.get("direct_development_dependencies", {})
         )
         for name in ("pytest", "pytest-asyncio", "ruff"):
             required_pins[f"backend.dev.{name}"] = (

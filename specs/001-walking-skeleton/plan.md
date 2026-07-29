@@ -1,6 +1,6 @@
 ---
 feature_id: "001"
-status: "planned"
+status: "implementation-in-progress"
 inception_baseline: "IB-001"
 constitution_version: "1.0.0"
 ---
@@ -22,12 +22,19 @@ fixtures instead of retrieval or a model provider.
 | Deterministic authority | Server derives mode/workspace; Pydantic validates input; code owns revisions, idempotency, and event sequence. | Pass |
 | Typed interfaces | OpenAPI 3.1 and JSON Schema 2020-12 define the public boundary; generated TypeScript is checked. | Pass |
 | User-owned memory | Memory is absent from this slice; no inferred or durable preference is created. | Pass |
-| Product-owned presentation | Only `recommendation-summary@1.0` and `view-evidence` are accepted. | Pass |
+| Product-owned presentation | Only `recommendation-summary@1.0` and the disabled `view-evidence` action are accepted; loading, empty, partial-evidence, abstention, error, reconnect, and completed states remain product-owned. | Pass |
 | Privacy and scope | Signed guest context or local deployment derives workspace; denial occurs before side effects. | Pass |
 | Test-first delivery | `tasks.md` creates each behavioral test before its production path. | Pass |
 | Durable and observable runs | Input snapshots, jobs, ordered events, terminal state, replay, readiness, and redaction are included. | Pass |
 | Performance and spend | A fake-model load test exercises the four-second first-useful-UI target; provider spend is zero. | Pass |
 | Reproducibility | Compose, locked package managers, migrations, seed fixture, and clean commands are defined. | Pass |
+
+EPIC-001 requires the full controlled-UI and interactive-performance gates.
+Its security and operations coverage is explicitly partial: this slice owns
+workspace/capability/request/UI/telemetry security plus decision/run/session
+durability, idempotency, leases, replay, restart, and reset deletion jobs.
+Ingestion/model/connector security and outcome/memory/source/Qdrant/blob
+operations remain with the features that introduce those surfaces.
 
 ## Runtime topology
 
@@ -42,6 +49,9 @@ fixtures instead of retrieval or a model provider.
 The Next.js server is a thin browser-facing proxy. It forwards the signed guest
 cookie and streams API events but stores no domain state and possesses no model
 provider key. The browser never calls FastAPI directly in the public deployment.
+The Python backend is an installable `src` package built with the locked
+`uv_build` backend. Tests, containers, and production entry points import that
+installed package and do not depend on `PYTHONPATH`.
 
 Phase A establishes only process topology. The web and worker are reachable
 through Compose health checks; the worker has no HTTP or job API. FastAPI
@@ -49,7 +59,11 @@ exposes the versioned liveness and readiness paths directly from `main.py`.
 T021 later extracts and hardens those probes without changing their contract.
 The backend includes an Alembic scaffold with no revision or domain table; an
 empty database head set is current only when it exactly equals the repository's
-empty head set. T009 introduces `0001_walking_skeleton.py`.
+empty head set. T009 introduces `0001_walking_skeleton.py`, updates fresh
+Compose startup to apply it before readiness, and changes the permanent
+acceptance expectation to exact database/repository equality at that head. The
+recorded T002–T003 RED/GREEN evidence remains the proof of the earlier
+empty-head state.
 
 ## Source layout to create
 
@@ -85,11 +99,13 @@ services/backend/
 │   ├── api/routes/runs.py
 │   ├── api/routes/health.py
 │   ├── api/dependencies/context.py
+│   ├── contracts/_base.py
 │   ├── contracts/config.py
 │   ├── contracts/decision.py
 │   ├── contracts/errors.py
 │   ├── contracts/run.py
 │   ├── contracts/ui.py
+│   ├── contracts/generate.py
 │   ├── domain/ids.py
 │   ├── domain/idempotency.py
 │   ├── domain/revisions.py
@@ -160,7 +176,11 @@ infra/
    and closes after a terminal event.
 8. Next.js validates every envelope before dispatching it to the fixed React
    component map. Invalid or unknown envelopes render a safe error state and
-   cannot expose actions.
+   cannot expose actions. Valid stream and snapshot conditions drive the seven
+   product-owned presentation states: loading, empty, partial-evidence,
+   abstention, error, reconnect, and completed. Those states do not introduce a
+   new event or envelope kind, recommendation intelligence, retrieval, evidence
+   claims, or a model call.
 
 ## Security and deployment decisions
 
@@ -193,13 +213,26 @@ infra/
   issue guest sessions.
 - Unknown resources and cross-workspace resources share one HTTP 404 response.
 - Connector route stubs are registered so denial can be tested. In
-  `public-demo`, they return `capability_disabled` before parsing bodies or
-  resolving targets.
-- CORS permits only the configured web origin. Trusted proxy settings are
-  explicit. Request and body-size limits apply at both web proxy and API.
-- Telemetry uses allowlisted attributes. Request bodies, response bodies,
-  cookies, authorization headers, UI payloads, and decision text are never
-  captured.
+  `public-demo`, they return `capability_disabled` before reading or parsing any
+  body byte, resolving targets, or invoking persistence, filesystem, network,
+  queue, or vector clients. This decision remains pre-body even when the
+  advertised or transmitted body exceeds the ordinary request limit.
+- CORS permits only the configured web origin. Untrusted `Forwarded` and
+  `X-Forwarded-*` headers cannot change the trusted origin, scheme, host,
+  client, upstream target, or workspace context.
+- Ordinary JSON requests are limited to 256 KiB at both the Next.js proxy and
+  FastAPI boundary and fail before JSON parsing or proxy forwarding with HTTP
+  413 and stable `request_too_large`.
+- Every HTML response uses a fresh nonce for executable scripts and sends a CSP
+  that permits only the nonce-bearing scripts and includes
+  `frame-ancestors 'none'`. Responses also send
+  `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+- Logs, OpenTelemetry traces, and OpenTelemetry metrics use manual,
+  allowlisted instrumentation. Allowed fields are limited to route templates,
+  methods, statuses, durations, event counts, run states, job outcomes, and
+  bounded workspace-safe correlation identifiers. Raw paths, workspace IDs,
+  request or response bodies, cookies, authorization headers, UI payloads,
+  decision text, and other user-authored content are never captured.
 
 ## Persistence and concurrency
 
@@ -234,19 +267,44 @@ infra/
 ## Contract generation
 
 `services/backend/src/ai_cto_cockpit/contracts/` is canonical. The backend
-generation command writes `contracts/generated/openapi.json` and
-`contracts/generated/ui-envelope.schema.json`. The web generation command writes
+generation command deterministically writes
+`contracts/generated/openapi.json` and
+`contracts/generated/ui-envelope.schema.json`; repeated generation from the same
+inputs is byte-stable. The web generation command writes
 `apps/web/src/contracts/generated.ts` and validates that its runtime schema is
-equivalent to the checked-in JSON Schema.
+semantically equivalent to the checked-in JSON Schema.
 
 The design-time files in this feature directory are binding inputs. Production
 generation must be semantically equivalent; ordering and descriptive prose may
 differ.
 
+The frontend closed-parser suite includes generated unknown-version, kind,
+field, action, markup, script, URL, prototype, oversize, and recursive
+payloads. Every malicious case returns the safe typed failure and produces zero
+HTML, JavaScript, route, or network action execution.
+
+## Tooling maintenance boundaries
+
+Dependency-lock changes are isolated, reviewed, and applied immediately before
+the owning task. Each update regenerates the affected lockfile, updates only the
+governance hashes changed by that maintenance packet, reruns bootstrap
+verification, and preserves the previously recorded RED evidence.
+
+| Owning task | Locked maintenance |
+|---|---|
+| T005 | `uv_build==0.11.16` and direct `pyyaml==6.0.3`; convert the backend to an installable `src` package |
+| T007 | `eslint==9.39.2`; applied early by `IM-001` because the pre-T005 blocking `make check`/CI gate owns the same compatibility boundary; confirm the pin and retain every accepted Next.js lint rule |
+| T009 | `uuid6==2025.0.1` and `cryptography==49.0.0`; AES-256-GCM with a fresh random 96-bit nonce and the `data-model.md` associated data |
+| T014 | `hypothesis==6.160.0` |
+| T021 | `opentelemetry-sdk==1.44.0` and `opentelemetry-exporter-otlp-proto-http==1.44.0`; manual allowlisted instrumentation |
+| T024 | `jsdom==29.1.1`, `@testing-library/react==16.3.2`, `@testing-library/dom==10.4.1`, and `@testing-library/user-event==14.6.1` |
+
 ## Verification commands
 
 | Purpose | Command |
 |---|---|
+| Bootstrap packet | `./scripts/verify-bootstrap.sh` |
+| Static quality gates | `make check` |
 | Backend unit and contract tests | `uv run --project services/backend pytest services/backend/tests/unit services/backend/tests/contracts` |
 | Backend integration and security tests | `uv run --project services/backend pytest services/backend/tests/integration services/backend/tests/api services/backend/tests/security services/backend/tests/property` |
 | Frontend unit tests | `pnpm --dir apps/web test` |
@@ -273,6 +331,12 @@ pytest command reproducible and prevents it from touching another local stack.
 8. Isolation, redaction, accessibility, restart, and load evidence.
 9. Documentation, clean-room quickstart, traceability evidence, and convergence.
 
+After T005, the `[P]` T006–T007 web-contract lane and `[P]` T008–T009
+persistence lane may run concurrently, but each keeps its RED-before-GREEN
+order and receives a separate review. After T029, the `[P]` T030–T031
+accessibility lane and `[P]` T032–T033 performance lane follow the same rule.
+No other task range is parallel.
+
 ## Operational evidence
 
 Feature convergence records:
@@ -281,8 +345,17 @@ Feature convergence records:
 - migration head and schema hash;
 - contract-generation diff result;
 - unit, integration, property, security, frontend, and end-to-end results;
-- five-user load-test p50, p95, and maximum timings;
-- accessibility report;
-- telemetry-redaction capture result;
+- reference-Linux five-user load-test p50, p95, p99, sample count, browser/span
+  correlation, error rate, and duplicate-effect results after 20 warm-up and at
+  least 200 completed measured turns, including 100-event replay;
+- automated and manual accessibility reports covering every approved state,
+  keyboard and focus-return, reduced motion, 200% zoom, one supported desktop
+  screen reader, 360/768/1280/1440-pixel viewports, semantic comparison,
+  meaningful announcements, and automated violations;
+- configured-origin CORS, untrusted-forwarded-header, 256 KiB API/proxy limit,
+  pre-body capability denial, and response-security-header results;
+- allowlisted log, trace, and metric capture results;
 - feature evaluation manifest containing commit, fixture, schema, and fake-model
   versions.
+- immutable clean-clone quickstart and Compose results from macOS and the
+  four-vCPU/eight-GiB reference Linux environment.

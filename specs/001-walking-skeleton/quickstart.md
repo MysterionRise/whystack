@@ -1,8 +1,7 @@
 # Walking Skeleton Quickstart
 
 This quickstart describes the repository after feature 001 has been implemented.
-The bootstrap packet itself contains specifications and contracts, not
-application code.
+It is also the convergence command list for T034.
 
 ## Prerequisites
 
@@ -45,22 +44,36 @@ controlled recommendation component must resume without duplicating events.
 Run:
 
 ```sh
+./scripts/verify-bootstrap.sh
+make install
+make check
 make contracts-check
 uv run --project services/backend pytest
+uv run --project services/backend pytest tests/e2e/test_compose_readiness.py
 pnpm --dir apps/web check
 pnpm --dir apps/web test
 pnpm --dir apps/web test:e2e
 make eval-feature FEATURE=001
 ```
 
-All commands must pass from a clean clone after lockfile installation.
+All commands must pass from a clean clone. `make check` is blocking and covers
+Ruff linting and formatting, Pyright over backend source and tests, and
+frontend linting and type checking.
 
 ## Exercise the public-demo boundary
 
 The frontend must display uploads and live connectors as unavailable. Direct API
 requests to the reserved upload, local Git, GitHub, and web connector routes
 must return HTTP 403 with `capability_disabled` and must create no job or source
-record.
+record. The denial must be decided without reading the request body, including
+when that body is larger than the ordinary 256 KiB JSON limit.
+
+Only the configured web origin may receive CORS access. Untrusted forwarded
+headers must not change trusted request or workspace context. Ordinary JSON
+bodies larger than 256 KiB must be rejected at both the web proxy and API.
+HTML responses must carry a per-response script nonce, a CSP containing
+`frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, and
+`Referrer-Policy: no-referrer`.
 
 ## Stop and remove local test data
 
