@@ -1,0 +1,155 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - edge
+    ports:
+      - target: 3000
+        published: "${WEB_PORT:-3000}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/health')
+          .then((response) => {
+            if (!response.ok) process.exit(1);
+          })
+          .catch(() => process.exit(1))
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 5s
+
+  api:
+    build:
+      context: ..
+      dockerfile: services/backend/Dockerfile
+    command:
+      - uvicorn
+      - ai_cto_cockpit.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      APP_MODE: "${APP_MODE:-public-demo}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://ai_cto:ai_cto_demo_only@postgres:5432/ai_cto}"
+      QDRANT_URL: "${QDRANT_URL:-http://qdrant:6333}"
+    networks:
+      - edge
+      - dependencies
+    ports:
+      - target: 8000
+        published: "${API_PORT:-8000}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          from urllib.request import urlopen;
+          response = urlopen(
+            'http://127.0.0.1:8000/api/v1/health/ready',
+            timeout=3
+          );
+          raise SystemExit(0 if response.status == 200 else 1)
+      interval: 2s
+      timeout: 4s
+      retries: 60
+      start_period: 5s
+
+  worker:
+    build:
+      context: ..
+      dockerfile: services/backend/Dockerfile
+    command:
+      - python
+      - -m
+      - ai_cto_cockpit.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      APP_MODE: "${APP_MODE:-public-demo}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql+psycopg://ai_cto:ai_cto_demo_only@postgres:5432/ai_cto}"
+      QDRANT_URL: "${QDRANT_URL:-http://qdrant:6333}"
+    networks:
+      - dependencies
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -m
+        - ai_cto_cockpit.worker
+        - --healthcheck
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 2s
+
+  postgres:
+    image: "postgres:17.10-bookworm@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394"
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-ai_cto}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-ai_cto_demo_only}"
+      POSTGRES_USER: "${POSTGRES_USER:-ai_cto}"
+    networks:
+      - dependencies
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 5s
+
+  qdrant:
+    image: "qdrant/qdrant:v1.18.2@sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c"
+    networks:
+      - dependencies
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -ec
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/6333
+          printf 'GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3
+          IFS= read -r status <&3
+          [[ "$$status" == *" 200 "* ]]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 5s
+
+networks:
+  edge:
+  dependencies:
+    internal: true
+
+volumes:
+  postgres_data:
+  qdrant_data:

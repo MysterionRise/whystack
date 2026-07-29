@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-cto-cockpit.example/schemas/evaluation-case-0.1.0.json",
+  "title": "AI CTO Cockpit evaluation case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "kind",
+    "category",
+    "title",
+    "quality_ids",
+    "workspace_id",
+    "input",
+    "expected",
+    "tags"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,63}$"
+    },
+    "kind": {
+      "enum": ["decision", "attack"]
+    },
+    "category": {
+      "enum": [
+        "retrieval_citation",
+        "constraint_conflict",
+        "memory_sequence",
+        "prompt_injection"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 8
+    },
+    "quality_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^QUALITY-[A-Z]+-[0-9]{3}$"
+      }
+    },
+    "workspace_id": {
+      "const": "seed-public"
+    },
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "expected": {
+      "$ref": "#/$defs/expected"
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "attack"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "category": {
+            "const": "prompt_injection"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 2
+        }
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "weight"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]+$"
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "operator", "value"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]+$"
+        },
+        "type": {
+          "enum": [
+            "budget_gbp_monthly",
+            "data_region",
+            "forbidden_capability",
+            "required_capability",
+            "deadline",
+            "deployment_mode"
+          ]
+        },
+        "operator": {
+          "enum": ["eq", "lte", "gte", "contains", "not_contains", "before"]
+        },
+        "value": {
+          "type": ["string", "number", "boolean"]
+        },
+        "hard": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "historyEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "recorded_at",
+        "status",
+        "provenance",
+        "key",
+        "value"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^event-[a-z0-9-]+$"
+        },
+        "event_type": {
+          "enum": [
+            "decision_accepted",
+            "preference_confirmed",
+            "preference_proposed",
+            "decision_dismissed"
+          ]
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "enum": ["active", "proposed", "superseded", "deleted"]
+        },
+        "provenance": {
+          "enum": ["user_explicit", "system_inferred"]
+        },
+        "key": {
+          "type": "string",
+          "minLength": 3
+        },
+        "value": {
+          "type": ["string", "number", "boolean"]
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_question",
+        "options",
+        "criteria",
+        "constraints",
+        "history"
+      ],
+      "properties": {
+        "decision_question": {
+          "type": "string",
+          "minLength": 12
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/criterion"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraint"
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/historyEvent"
+          }
+        },
+        "untrusted_artifact_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "path",
+        "line_start",
+        "line_end",
+        "quote",
+        "supports"
+      ],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9_./-]+$"
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 4
+        },
+        "supports": {
+          "type": "string",
+          "minLength": 3
+        }
+      }
+    },
+    "constraintResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["option_id", "constraint_id", "result"],
+      "properties": {
+        "option_id": {
+          "type": "string"
+        },
+        "constraint_id": {
+          "type": "string"
+        },
+        "result": {
+          "enum": ["pass", "fail", "unknown"]
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "selected_option",
+        "required_evidence",
+        "required_constraint_results",
+        "required_memory_influences",
+        "must_ignore_memory",
+        "forbidden_behaviors"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": ["recommend", "abstain", "safe_answer"]
+        },
+        "selected_option": {
+          "type": ["string", "null"]
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "required_constraint_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraintResult"
+          }
+        },
+        "required_memory_influences": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^event-[a-z0-9-]+$"
+          }
+        },
+        "must_ignore_memory": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^event-[a-z0-9-]+$"
+          }
+        },
+        "forbidden_behaviors": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 4
+          }
+        },
+        "allowed_ui_components": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "DecisionFrame",
+              "EvidenceList",
+              "OptionComparison",
+              "RecommendationCard",
+              "AbstentionCard",
+              "MemoryInfluence"
+            ]
+          }
+        },
+        "explanation_must_include": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        }
+      }
+    }
+  }
+}

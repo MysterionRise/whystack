@@ -1,8 +1,0 @@
-{
-  "extends": "@docintel/tsconfig/worker.json",
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
-    "noEmit": true
-  },
-  "include": ["src"]
-}

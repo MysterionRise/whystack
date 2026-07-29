@@ -1,0 +1,131 @@
+schema_version: "1.0"
+workflow:
+  id: "ai-feature-delivery"
+  name: "Bounded AI Feature Delivery"
+  version: "1.0.0"
+  author: "AI CTO Cockpit"
+  description: "Runs the Spec Kit delivery loop with reviewed RED-GREEN task batches"
+
+requires:
+  speckit_version: ">=0.14.2"
+  integrations:
+    any:
+      - "codex"
+      - "claude"
+
+inputs:
+  spec:
+    type: string
+    required: true
+    prompt: "Describe one small feature outcome and its accepted BMAD baseline links"
+  integration:
+    type: string
+    default: "auto"
+    prompt: "Initialized agent integration; auto uses the project default"
+  batch:
+    type: string
+    required: true
+    prompt: "Reviewed task IDs or one phase to implement, for example T001-T003"
+  completion:
+    type: string
+    default: "batch"
+    enum: ["batch", "final"]
+    prompt: "Use final only when this is the feature's last planned batch"
+
+steps:
+  - id: specify
+    command: speckit.specify
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "{{ inputs.spec }}"
+
+  - id: clarify
+    command: speckit.clarify
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Resolve material ambiguity, authority boundaries, and failure semantics."
+
+  - id: requirements-checklist
+    command: speckit.checklist
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Check requirements completeness, baseline traceability, AI safety, privacy, security, accessibility, and testability."
+
+  - id: review-spec
+    type: gate
+    message: "Approve only after the specification has no open material clarification and its requirements checklist passes."
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: plan
+    command: speckit.plan
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Plan within the accepted BMAD baseline and project constitution; name exact contracts, migrations, trust boundaries, rollback, tests, and evaluation datasets."
+
+  - id: ai-security-checklist
+    command: speckit.checklist
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Check the plan and contracts for AI quality, privacy, security, threat mitigations, accessibility, observability, and every accepted quality gate."
+
+  - id: review-plan
+    type: gate
+    message: "Approve only after the plan, contracts, and post-plan AI/security checklist validate and no product, UX, trust, storage, or quality baseline has changed."
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: tasks
+    command: speckit.tasks
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Generate mandatory traceable RED-GREEN pairs with exact paths and verification commands."
+
+  - id: analyze
+    command: speckit.analyze
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Report cross-artifact inconsistency, untraced requirements, constitution violations, and missing RED-first tasks."
+
+  - id: implementation-entry
+    type: gate
+    message: "Approve only after analysis has no critical finding, the requested task batch is reviewed, and its first expected RED command is explicit."
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: implement-batch
+    command: speckit.implement
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Implement only this reviewed bounded batch: {{ inputs.batch }}. Observe and preserve each expected RED result before its paired GREEN change. Stop after the named batch; do not continue into another task or phase."
+
+  - id: verify-batch
+    type: prompt
+    integration: "{{ inputs.integration }}"
+    prompt: "Verify only the reviewed batch {{ inputs.batch }}. Run every exact deterministic command and applicable versioned AI, security, privacy, accessibility, latency, and cost evaluation named by those tasks. Confirm the initial RED evidence, final GREEN evidence, changed files, and remaining risks. Do not weaken a test or accepted threshold."
+
+  - id: review-batch
+    type: gate
+    message: "Approve only after fresh RED and GREEN evidence, deterministic checks, applicable evaluations, and a bounded diff have been reviewed."
+    options: [approve, reject]
+    on_reject: abort
+
+  - id: final-convergence
+    type: if
+    condition: "{{ inputs.completion == 'final' }}"
+    then:
+      - id: converge
+        command: speckit.converge
+        integration: "{{ inputs.integration }}"
+        input:
+          args: "Assess the completed feature against its specification, plan, contracts, tasks, tests, evaluations, and accepted baseline."
+      - id: human-review
+        type: gate
+        message: "Approve the feature only if convergence reports no critical gap and product, security, accessibility, privacy, and operations evidence is acceptable."
+        options: [approve, reject]
+        on_reject: abort
+    else:
+      - id: next-batch
+        type: gate
+        message: "This bounded batch is complete. Stop this run; begin a new run with the next reviewed RED-GREEN batch."
+        options: [stop]

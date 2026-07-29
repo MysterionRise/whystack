@@ -1,0 +1,14 @@
+{
+  "include": [
+    "services/backend/src",
+    "tests/e2e"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "strict",
+  "venvPath": "services/backend",
+  "venv": ".venv"
+}

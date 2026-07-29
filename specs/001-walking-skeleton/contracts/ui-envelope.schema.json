@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ai-cto-cockpit:ui-envelope:1.0",
+  "title": "AI CTO Cockpit UI Envelope",
+  "description": "Closed controlled-component envelope for walking-skeleton demonstration output.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "component",
+    "actions",
+    "meta"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "component": {
+      "$ref": "#/$defs/recommendationSummary"
+    },
+    "actions": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/viewEvidenceAction"
+      }
+    },
+    "meta": {
+      "$ref": "#/$defs/envelopeMeta"
+    }
+  },
+  "$defs": {
+    "optionScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "optionId",
+        "score"
+      ],
+      "properties": {
+        "optionId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "recommendationSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "title",
+        "status",
+        "selectedOptionId",
+        "rationale",
+        "optionScores",
+        "disclaimer"
+      ],
+      "properties": {
+        "kind": {
+          "const": "recommendation-summary"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "status": {
+          "const": "demonstration"
+        },
+        "selectedOptionId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "optionScores": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/optionScore"
+          }
+        },
+        "disclaimer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "viewEvidenceAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "label",
+        "enabled"
+      ],
+      "properties": {
+        "kind": {
+          "const": "view-evidence"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "enabled": {
+          "const": false
+        }
+      }
+    },
+    "envelopeMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runId",
+        "eventSequence",
+        "generatedBy",
+        "fixtureVersion"
+      ],
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "eventSequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generatedBy": {
+          "const": "deterministic-fixture"
+        },
+        "fixtureVersion": {
+          "const": "walking-skeleton-v1"
+        }
+      }
+    }
+  }
+}

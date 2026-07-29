@@ -1,0 +1,1341 @@
+openapi: 3.1.0
+info:
+  title: AI CTO Cockpit Walking Skeleton API
+  version: 0.1.0
+  description: >
+    Binding feature-001 contract for server-derived deployment configuration,
+    versioned decisions, durable deterministic runs, controlled UI events, and
+    replay. The server derives workspace scope from trusted session context.
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+servers:
+  - url: /api/v1
+    description: Next.js-proxied application API
+x-runtime-security:
+  public-demo: >
+    GET /config and health probes are unauthenticated. /config establishes the
+    signed guest cookie; application operations then require that cookie, except
+    the narrowly specified reset-replay use of a verified revoked cookie.
+  local-data: >
+    No guest cookie is issued or required. The single local workspace is derived
+    from trusted server configuration, and public-demo-only capabilities return
+    capability_disabled.
+tags:
+  - name: runtime
+  - name: decisions
+  - name: runs
+  - name: demo-boundary
+  - name: health
+paths:
+  /config:
+    get:
+      operationId: getRuntimeConfig
+      tags:
+        - runtime
+      summary: Return server-derived mode and capabilities
+      security: []
+      responses:
+        "200":
+          description: Runtime configuration; may establish a signed guest cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Opaque HttpOnly guest session cookie in public-demo mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeConfig"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /session/reset:
+    post:
+      operationId: resetGuestSession
+      tags:
+        - runtime
+      summary: Revoke the current guest overlay and establish a new one
+      description: >
+        The first accepted call atomically creates the replacement session,
+        revokes the old session, queues old-overlay deletion, and writes a
+        ten-minute replay receipt. During that window only this route accepts
+        the cryptographically valid revoked old cookie, and only when its
+        fingerprint, Idempotency-Key, and normalized request hash match the
+        receipt. Such a retry returns the original body and exact Set-Cookie
+        value. Other uses of the revoked cookie are unauthorized.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: >
+            Previous session revoked and scoped deletion queued, or exact replay
+            of that original accepted response
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: >
+                New opaque HttpOnly guest session cookie; an idempotent retry
+                reproduces the exact original header value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetSessionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/CapabilityDisabled"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /decisions:
+    post:
+      operationId: createDecision
+      tags:
+        - decisions
+      summary: Create a decision with immutable revision 1
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionFrameInput"
+      responses:
+        "201":
+          description: Decision created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionView"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /decisions/{decisionId}:
+    parameters:
+      - $ref: "#/components/parameters/DecisionId"
+    get:
+      operationId: getDecision
+      tags:
+        - decisions
+      summary: Return the current authorized decision revision
+      responses:
+        "200":
+          description: Current decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionView"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /decisions/{decisionId}/revisions:
+    parameters:
+      - $ref: "#/components/parameters/DecisionId"
+    post:
+      operationId: reviseDecision
+      tags:
+        - decisions
+      summary: Append an immutable decision revision
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/ExpectedRevision"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionFrameInput"
+      responses:
+        "201":
+          description: Revision appended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionView"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/RevisionOrIdempotencyConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /decisions/{decisionId}/runs:
+    parameters:
+      - $ref: "#/components/parameters/DecisionId"
+    post:
+      operationId: createRun
+      tags:
+        - runs
+      summary: Persist and dispatch a deterministic run for the current revision
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/ExpectedRevision"
+      responses:
+        "202":
+          description: Run persisted and queued
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Relative URL of the run snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunView"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/RevisionOrIdempotencyConflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /runs/{runId}:
+    parameters:
+      - $ref: "#/components/parameters/RunId"
+    get:
+      operationId: getRun
+      tags:
+        - runs
+      summary: Return an authorized durable run snapshot
+      responses:
+        "200":
+          description: Run snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunView"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /runs/{runId}/events:
+    parameters:
+      - $ref: "#/components/parameters/RunId"
+    get:
+      operationId: streamRunEvents
+      tags:
+        - runs
+      summary: Stream persisted events after an acknowledged sequence
+      parameters:
+        - name: afterSequence
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Last acknowledged sequence when Last-Event-ID is absent
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+          description: Standard SSE resume sequence; takes precedence over query value
+      responses:
+        "200":
+          description: >
+            Server-sent event stream. Each event id is its persisted sequence;
+            data is a RunEvent JSON document. A comment heartbeat is sent every
+            fifteen seconds while waiting.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: no-cache, no-transform
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /sources/uploads:
+    post:
+      operationId: denyOrReportUploadCapability
+      tags:
+        - demo-boundary
+      summary: Reserved upload boundary
+      description: >
+        Returns capability_disabled in public-demo mode and
+        capability_not_implemented in local-data mode during feature 001.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "403":
+          $ref: "#/components/responses/CapabilityDisabled"
+        "501":
+          $ref: "#/components/responses/CapabilityNotImplemented"
+  /connectors/{connectorKind}/sync:
+    post:
+      operationId: denyOrReportConnectorCapability
+      tags:
+        - demo-boundary
+      summary: Reserved live-connector boundary
+      description: >
+        Returns capability_disabled in public-demo mode and
+        capability_not_implemented in local-data mode during feature 001.
+      parameters:
+        - name: connectorKind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - local-git
+              - github
+              - web
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "403":
+          $ref: "#/components/responses/CapabilityDisabled"
+        "501":
+          $ref: "#/components/responses/CapabilityNotImplemented"
+  /health/live:
+    get:
+      operationId: getLiveness
+      tags:
+        - health
+      summary: Report API process liveness
+      security: []
+      responses:
+        "200":
+          description: Process is live
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Liveness"
+  /health/ready:
+    get:
+      operationId: getReadiness
+      tags:
+        - health
+      summary: Report migration and dependency readiness
+      security: []
+      responses:
+        "200":
+          description: Dependencies and migration state are ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Readiness"
+        "503":
+          description: One or more readiness checks failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Readiness"
+components:
+  securitySchemes:
+    guestSession:
+      type: apiKey
+      in: cookie
+      name: ai_cto_guest
+      description: >
+        Opaque signed guest-session cookie required for public-demo application
+        operations. It is absent in credential-free local-data mode; the
+        top-level empty security alternative represents only that server-selected
+        profile, not an anonymous public-demo bypass.
+  parameters:
+    DecisionId:
+      name: decisionId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Uuid7"
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Uuid7"
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+        pattern: "^[\\x21-\\x7E]+$"
+      description: >
+        Unique request key within trusted scope and operation. Ordinary
+        mutations use workspace scope; guest reset replay uses the verified old
+        session fingerprint.
+    ExpectedRevision:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Expected current integer decision revision
+  responses:
+    Unauthorized:
+      description: >
+        Guest session is missing, invalid, expired, or revoked without the exact
+        unexpired reset replay receipt required by this operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          examples:
+            unauthorized:
+              value:
+                code: session_unauthorized
+                message: A valid guest session is required.
+                correlationId: 019c0123-4567-7abc-8def-0123456789ab
+                fields: []
+    NotFound:
+      description: Resource is missing or outside the authorized workspace
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          examples:
+            resourceNotFound:
+              value:
+                code: resource_not_found
+                message: The requested resource was not found.
+                correlationId: 019c0123-4567-7abc-8def-0123456789ab
+                fields: []
+    CapabilityDisabled:
+      description: Capability is disabled by the server-derived deployment mode
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          examples:
+            disabled:
+              value:
+                code: capability_disabled
+                message: This capability is not available in public-demo mode.
+                correlationId: 019c0123-4567-7abc-8def-0123456789ab
+                fields: []
+    CapabilityNotImplemented:
+      description: Capability is planned for a later feature
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+          examples:
+            deferred:
+              value:
+                code: capability_not_implemented
+                message: This capability is not implemented in this release.
+                correlationId: 019c0123-4567-7abc-8def-0123456789ab
+                fields: []
+    IdempotencyConflict:
+      description: Idempotency key was reused for a different normalized request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    RevisionOrIdempotencyConflict:
+      description: Expected revision is stale or idempotency key conflicts
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    ServiceUnavailable:
+      description: Required dependency or migration is not ready
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+  schemas:
+    RuntimeConfig:
+      type: object
+      additionalProperties: false
+      required:
+        - apiVersion
+        - mode
+        - capabilities
+        - guestExpiresAt
+      properties:
+        apiVersion:
+          const: "v1"
+        mode:
+          type: string
+          enum:
+            - public-demo
+            - local-data
+        capabilities:
+          $ref: "#/components/schemas/Capabilities"
+        guestExpiresAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    Capabilities:
+      type: object
+      additionalProperties: false
+      required:
+        - canCreateDecision
+        - canRunDecision
+        - canReplayRun
+        - canResetGuestWorkspace
+        - persistentWorkspace
+        - canUpload
+        - canUseLocalGit
+        - canUseGitHub
+        - canUseWeb
+      properties:
+        canCreateDecision:
+          type: boolean
+        canRunDecision:
+          type: boolean
+        canReplayRun:
+          type: boolean
+        canResetGuestWorkspace:
+          type: boolean
+        persistentWorkspace:
+          type: boolean
+        canUpload:
+          const: false
+        canUseLocalGit:
+          const: false
+        canUseGitHub:
+          const: false
+        canUseWeb:
+          const: false
+    ResetSessionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - resetAccepted
+        - guestExpiresAt
+      properties:
+        resetAccepted:
+          const: true
+        guestExpiresAt:
+          type: string
+          format: date-time
+    DecisionFrameInput:
+      type: object
+      additionalProperties: false
+      description: >
+        User-authored decision frame. Criterion entered weights are bounded
+        lossless decimal strings and do not need to total 100;
+        normalizedWeight is server-owned and is not accepted here.
+      required:
+        - schemaVersion
+        - question
+        - context
+        - options
+        - criteria
+        - constraints
+      properties:
+        schemaVersion:
+          const: "1.0"
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+        context:
+          type: string
+          maxLength: 10000
+        options:
+          type: array
+          minItems: 2
+          maxItems: 8
+          items:
+            $ref: "#/components/schemas/DecisionOption"
+        criteria:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: Criterion IDs are unique within the frame
+          items:
+            $ref: "#/components/schemas/CriterionInput"
+        constraints:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/Constraint"
+    DecisionFrameView:
+      type: object
+      additionalProperties: false
+      description: >
+        Immutable persisted frame projection. Each criterion preserves the
+        submitted enteredWeight and includes the server-computed
+        normalizedWeight; both are lossless decimal strings. Normalized weights
+        use deterministic
+        largest-remainder apportionment at four decimal places and total
+        exactly 100.0000.
+      required:
+        - schemaVersion
+        - question
+        - context
+        - options
+        - criteria
+        - constraints
+      properties:
+        schemaVersion:
+          const: "1.0"
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+        context:
+          type: string
+          maxLength: 10000
+        options:
+          type: array
+          minItems: 2
+          maxItems: 8
+          items:
+            $ref: "#/components/schemas/DecisionOption"
+        criteria:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: >
+            Criterion IDs are unique; normalizedWeight values total exactly
+            100.0000
+          items:
+            $ref: "#/components/schemas/CriterionView"
+        constraints:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/Constraint"
+    DecisionOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - description
+      properties:
+        id:
+          $ref: "#/components/schemas/Slug"
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+    CriterionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - enteredWeight
+      properties:
+        id:
+          $ref: "#/components/schemas/Slug"
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+        enteredWeight:
+          $ref: "#/components/schemas/EnteredWeight"
+    CriterionView:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - enteredWeight
+        - normalizedWeight
+      properties:
+        id:
+          $ref: "#/components/schemas/Slug"
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+        enteredWeight:
+          $ref: "#/components/schemas/EnteredWeight"
+        normalizedWeight:
+          $ref: "#/components/schemas/NormalizedWeight"
+    EnteredWeight:
+      type: string
+      minLength: 1
+      maxLength: 19
+      pattern: "^(?:0\\.[0-9]{1,8}|[1-9][0-9]{0,9}(?:\\.[0-9]{1,8})?)$"
+      not:
+        pattern: "^0\\.0{1,8}$"
+      description: >
+        Exact user-authored positive decimal string. No sign, exponent, or
+        leading zero is allowed; the value has at most ten integer digits and
+        eight fractional digits and lies from 0.00000001 through
+        9999999999.99999999. The server preserves the complete string, including
+        trailing fractional zeros.
+      examples:
+        - "1"
+        - "0.12500000"
+        - "9999999999.99999999"
+    NormalizedWeight:
+      type: string
+      pattern: "^(?:100\\.0000|(?:0|[1-9][0-9]?)\\.[0-9]{4})$"
+      readOnly: true
+      description: >
+        Server-computed percentage with exactly four fractional digits. The
+        server converts entered strings to common-scale integer coefficients,
+        apportions one million 0.0001-percentage-point units with integer
+        divmod, and distributes remaining units by descending remainder with
+        ascending criterion ID as tie-breaker.
+      examples:
+        - "33.3334"
+    Constraint:
+      oneOf:
+        - $ref: "#/components/schemas/BudgetConstraint"
+        - $ref: "#/components/schemas/DeadlineConstraint"
+        - $ref: "#/components/schemas/CapabilityConstraint"
+        - $ref: "#/components/schemas/ForbiddenVendorConstraint"
+        - $ref: "#/components/schemas/LicenseConstraint"
+        - $ref: "#/components/schemas/ResidencyConstraint"
+        - $ref: "#/components/schemas/DeploymentModeConstraint"
+      discriminator:
+        propertyName: kind
+        mapping:
+          budget: "#/components/schemas/BudgetConstraint"
+          deadline: "#/components/schemas/DeadlineConstraint"
+          capability: "#/components/schemas/CapabilityConstraint"
+          forbidden-vendor: "#/components/schemas/ForbiddenVendorConstraint"
+          license: "#/components/schemas/LicenseConstraint"
+          residency: "#/components/schemas/ResidencyConstraint"
+          deployment-mode: "#/components/schemas/DeploymentModeConstraint"
+    ConstraintBase:
+      type: object
+      required:
+        - id
+        - kind
+        - label
+        - severity
+      properties:
+        id:
+          $ref: "#/components/schemas/Slug"
+        kind:
+          type: string
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+        severity:
+          type: string
+          enum:
+            - hard
+            - advisory
+    BudgetConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - currency
+            - maximum
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: budget
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            currency:
+              type: string
+              pattern: "^[A-Z]{3}$"
+            maximum:
+              type: number
+              minimum: 0
+    DeadlineConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - date
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: deadline
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            date:
+              type: string
+              format: date
+    CapabilityConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - capability
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: capability
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            capability:
+              $ref: "#/components/schemas/Slug"
+    ForbiddenVendorConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - vendor
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: forbidden-vendor
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            vendor:
+              type: string
+              minLength: 1
+              maxLength: 120
+    LicenseConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - allowedSpdx
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: license
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            allowedSpdx:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items:
+                type: string
+                minLength: 1
+                maxLength: 80
+    ResidencyConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - allowedCountries
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: residency
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            allowedCountries:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items:
+                type: string
+                pattern: "^[A-Z]{2}$"
+    DeploymentModeConstraint:
+      allOf:
+        - $ref: "#/components/schemas/ConstraintBase"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - kind
+            - label
+            - severity
+            - allowedModes
+          properties:
+            id:
+              $ref: "#/components/schemas/Slug"
+            kind:
+              const: deployment-mode
+            label:
+              type: string
+              minLength: 1
+              maxLength: 120
+            severity:
+              type: string
+              enum:
+                - hard
+                - advisory
+            allowedModes:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items:
+                type: string
+                enum:
+                  - managed
+                  - self-hosted
+                  - on-device
+    DecisionView:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - currentRevision
+        - frame
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid7"
+        currentRevision:
+          type: integer
+          minimum: 1
+        frame:
+          $ref: "#/components/schemas/DecisionFrameView"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RunView:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - decisionId
+        - decisionRevision
+        - status
+        - lastEventSequence
+        - fixtureVersion
+        - createdAt
+        - startedAt
+        - completedAt
+        - errorCode
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid7"
+        decisionId:
+          $ref: "#/components/schemas/Uuid7"
+        decisionRevision:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - queued
+            - running
+            - completed
+            - failed
+        lastEventSequence:
+          type: integer
+          minimum: 0
+        fixtureVersion:
+          const: walking-skeleton-v1
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        completedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        errorCode:
+          oneOf:
+            - type: string
+              minLength: 1
+              maxLength: 80
+            - type: "null"
+    RunEvent:
+      oneOf:
+        - $ref: "#/components/schemas/RunQueuedEvent"
+        - $ref: "#/components/schemas/RunStartedEvent"
+        - $ref: "#/components/schemas/UiEnvelopeEvent"
+        - $ref: "#/components/schemas/RunCompletedEvent"
+        - $ref: "#/components/schemas/RunFailedEvent"
+      discriminator:
+        propertyName: kind
+        mapping:
+          run.queued: "#/components/schemas/RunQueuedEvent"
+          run.started: "#/components/schemas/RunStartedEvent"
+          ui.envelope: "#/components/schemas/UiEnvelopeEvent"
+          run.completed: "#/components/schemas/RunCompletedEvent"
+          run.failed: "#/components/schemas/RunFailedEvent"
+    RunEventBase:
+      type: object
+      additionalProperties: false
+      required:
+        - runId
+        - sequence
+        - kind
+        - schemaVersion
+        - payload
+        - createdAt
+      properties:
+        runId:
+          $ref: "#/components/schemas/Uuid7"
+        sequence:
+          type: integer
+          minimum: 1
+        kind:
+          type: string
+          enum:
+            - run.queued
+            - run.started
+            - ui.envelope
+            - run.completed
+            - run.failed
+        schemaVersion:
+          const: "1.0"
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+    RunQueuedEvent:
+      allOf:
+        - $ref: "#/components/schemas/RunEventBase"
+        - type: object
+          properties:
+            kind:
+              const: run.queued
+            payload:
+              $ref: "#/components/schemas/RunQueuedPayload"
+    RunStartedEvent:
+      allOf:
+        - $ref: "#/components/schemas/RunEventBase"
+        - type: object
+          properties:
+            kind:
+              const: run.started
+            payload:
+              $ref: "#/components/schemas/RunStartedPayload"
+    UiEnvelopeEvent:
+      allOf:
+        - $ref: "#/components/schemas/RunEventBase"
+        - type: object
+          properties:
+            kind:
+              const: ui.envelope
+            payload:
+              $ref: "#/components/schemas/UiEnvelope"
+    RunCompletedEvent:
+      allOf:
+        - $ref: "#/components/schemas/RunEventBase"
+        - type: object
+          properties:
+            kind:
+              const: run.completed
+            payload:
+              $ref: "#/components/schemas/RunCompletedPayload"
+    RunFailedEvent:
+      allOf:
+        - $ref: "#/components/schemas/RunEventBase"
+        - type: object
+          properties:
+            kind:
+              const: run.failed
+            payload:
+              $ref: "#/components/schemas/RunFailurePayload"
+    RunQueuedPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          const: queued
+    RunStartedPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          const: running
+    RunCompletedPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          const: completed
+    RunFailurePayload:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - errorCode
+      properties:
+        status:
+          const: failed
+        errorCode:
+          type: string
+          minLength: 1
+          maxLength: 80
+    UiEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - schemaVersion
+        - component
+        - actions
+        - meta
+      properties:
+        schemaVersion:
+          const: "1.0"
+        component:
+          $ref: "#/components/schemas/RecommendationSummary"
+        actions:
+          type: array
+          maxItems: 1
+          items:
+            $ref: "#/components/schemas/ViewEvidenceAction"
+        meta:
+          $ref: "#/components/schemas/UiEnvelopeMeta"
+    RecommendationSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - title
+        - status
+        - selectedOptionId
+        - rationale
+        - optionScores
+        - disclaimer
+      properties:
+        kind:
+          const: recommendation-summary
+        id:
+          $ref: "#/components/schemas/Slug"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        status:
+          const: demonstration
+        selectedOptionId:
+          $ref: "#/components/schemas/Slug"
+        rationale:
+          type: string
+          minLength: 1
+          maxLength: 1200
+        optionScores:
+          type: array
+          minItems: 2
+          maxItems: 8
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/OptionScore"
+        disclaimer:
+          type: string
+          minLength: 1
+          maxLength: 240
+    OptionScore:
+      type: object
+      additionalProperties: false
+      required:
+        - optionId
+        - score
+      properties:
+        optionId:
+          $ref: "#/components/schemas/Slug"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+    ViewEvidenceAction:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - label
+        - enabled
+      properties:
+        kind:
+          const: view-evidence
+        id:
+          $ref: "#/components/schemas/Slug"
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        enabled:
+          const: false
+    UiEnvelopeMeta:
+      type: object
+      additionalProperties: false
+      required:
+        - runId
+        - eventSequence
+        - generatedBy
+        - fixtureVersion
+      properties:
+        runId:
+          $ref: "#/components/schemas/Uuid7"
+        eventSequence:
+          type: integer
+          minimum: 1
+        generatedBy:
+          const: deterministic-fixture
+        fixtureVersion:
+          const: walking-skeleton-v1
+    Liveness:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          const: live
+    Readiness:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - checks
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+            - not-ready
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+            enum:
+              - ready
+              - not-ready
+          required:
+            - postgres
+            - migrations
+            - qdrant
+    ApiError:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - correlationId
+        - fields
+      properties:
+        code:
+          type: string
+          pattern: "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+          minLength: 1
+          maxLength: 80
+        message:
+          type: string
+          minLength: 1
+          maxLength: 240
+        correlationId:
+          $ref: "#/components/schemas/Uuid7"
+        fields:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      additionalProperties: false
+      required:
+        - path
+        - code
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 240
+        code:
+          type: string
+          pattern: "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+          minLength: 1
+          maxLength: 80
+    Slug:
+      type: string
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      minLength: 1
+      maxLength: 64
+    Uuid7:
+      type: string
+      format: uuid
+      pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+security:
+  - guestSession: []
+  - {}

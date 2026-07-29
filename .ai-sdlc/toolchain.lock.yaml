@@ -1,0 +1,165 @@
+schema_version: 1
+locked_on: "2026-07-27"
+policy:
+  upgrade_mode: isolated-reviewed-change
+  community_extensions: disabled
+  generated_directories_are_tool_owned: true
+tools:
+  bmad_method:
+    version: "6.10.0"
+    source: "https://github.com/bmad-code-org/BMAD-METHOD"
+    release: "https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.10.0"
+    enabled_capabilities:
+      - bmad-method
+      - test-architect
+    disabled_capabilities:
+      - feature-specification
+      - sprint-planning
+      - story-development
+      - quick-development
+      - automated-development
+      - implementation-review
+    excluded_agent_adapters:
+      - bmad-agent-dev
+      - bmad-code-review
+      - bmad-correct-course
+      - bmad-create-story
+      - bmad-dev-auto
+      - bmad-dev-story
+      - bmad-qa-generate-e2e-tests
+      - bmad-quick-dev
+      - bmad-retrospective
+      - bmad-spec
+      - bmad-sprint-planning
+      - bmad-sprint-status
+    exclusion_reason: Spec Kit is the sole feature-delivery and implementation loop.
+    owns:
+      - product-discovery
+      - product-requirements
+      - user-experience
+      - architecture-spine
+      - epics
+      - implementation-readiness
+      - system-test-strategy
+  bmad_tea:
+    version: "1.19.1"
+    source: "https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise"
+    npm_package: "bmad-method-test-architecture-enterprise@1.19.1"
+    source_commit: "74cf6e6adf5a6f46614788f184f340ea58336157"
+    npm_integrity: "sha512-aZDxGqmoKtVHHj/HwhW/wDrESzxrETLrVA+u6bjQvz+ffpuZIRhNjnylVNdjmevxSVJfpWOboiQM1Cqb9JfmMw=="
+    owns:
+      - risk-based-system-test-design
+      - quality-gate-strategy
+  github_spec_kit:
+    version: "0.14.2"
+    source: "https://github.com/github/spec-kit"
+    release: "https://github.com/github/spec-kit/releases/tag/v0.14.2"
+    owns:
+      - constitution
+      - feature-specifications
+      - feature-plans
+      - feature-contracts
+      - feature-tasks
+      - cross-artifact-analysis
+      - implementation
+      - convergence
+implementation_bootstrap:
+  pin_kind: compatibility-baseline
+  status: planning-pin-set
+  verified_on: "2026-07-27"
+  selection_notes:
+    - Node 24 is the active Krypton LTS line and satisfies pnpm 11 and Next.js 16 engine requirements.
+    - Python 3.12 follows the accepted walking-skeleton architecture.
+    - Only stable releases are selected; SQLAlchemy remains on stable 2.0 rather than the 2.1 prerelease line.
+    - Zod 3.25 is retained because the AG-UI 0.0.57 client resolves the Zod 3 API.
+  policy:
+    - These are explicit bootstrap pins, not floating latest-version ranges.
+    - Materialize them in package manifests and committed lockfiles during T001.
+    - Commit transitive resolutions from pnpm-lock.yaml and uv.lock.
+    - Materialize the recorded container manifest digests in infra/compose.yaml.
+    - Upgrade a pin only in an isolated, reviewed compatibility change.
+  runtimes:
+    nodejs:
+      version: "24.18.0"
+      release_line: Krypton-LTS
+      source: "https://nodejs.org/download/release/v24.18.0/"
+    python:
+      version: "3.12.13"
+      source: "https://www.python.org/downloads/release/python-31213/"
+  package_managers:
+    pnpm:
+      version: "11.17.0"
+      activation: "corepack install --global pnpm@11.17.0"
+      source: "https://www.npmjs.com/package/pnpm/v/11.17.0"
+    uv:
+      version: "0.11.16"
+      source: "https://github.com/astral-sh/uv/releases/tag/0.11.16"
+  workspace:
+    registry: "https://registry.npmjs.org/"
+    direct_development_dependencies:
+      pyright: "1.1.411"
+  frontend:
+    registry: "https://registry.npmjs.org/"
+    direct_dependencies:
+      next: "16.2.12"
+      react: "19.2.8"
+      react-dom: "19.2.8"
+      "@copilotkit/react-core": "1.63.2"
+      "@copilotkit/react-ui": "1.63.2"
+      "@ag-ui/client": "0.0.57"
+      "@ag-ui/core": "0.0.57"
+      zod: "3.25.76"
+    direct_development_dependencies:
+      typescript: "6.0.3"
+      "@types/react": "19.2.17"
+      "@types/react-dom": "19.2.3"
+      "@types/node": "24.13.3"
+      vitest: "4.1.10"
+      "@playwright/test": "1.62.0"
+      "@axe-core/playwright": "4.12.1"
+      eslint: "10.8.0"
+      eslint-config-next: "16.2.12"
+  backend:
+    registry: "https://pypi.org/simple/"
+    direct_dependencies:
+      fastapi: "0.140.1"
+      pydantic: "2.13.4"
+      pydantic-settings: "2.14.2"
+      langgraph: "1.2.9"
+      sqlalchemy: "2.0.51"
+      alembic: "1.18.5"
+      "psycopg[binary]": "3.3.4"
+      uvicorn: "0.51.0"
+    direct_development_dependencies:
+      pytest: "9.1.1"
+      pytest-asyncio: "1.4.0"
+      ruff: "0.16.0"
+  services:
+    postgresql:
+      version: "17.10"
+      image: "postgres:17.10-bookworm"
+      digest: "sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394"
+      source: "https://hub.docker.com/_/postgres"
+    qdrant:
+      version: "1.18.2"
+      image: "qdrant/qdrant:v1.18.2"
+      digest: "sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c"
+      source: "https://github.com/qdrant/qdrant/releases/tag/v1.18.2"
+bootstrap_validation:
+  python: "3.13"
+  uv: "0.11.16"
+  dependencies:
+    PyYAML: "6.0.2"
+    jsonschema: "4.25.1"
+    openapi-spec-validator: "0.7.2"
+  github_actions:
+    actions_checkout:
+      version: "6.0.2"
+      commit: "de0fac2e4500dabe0009e67214ff5f5447ce83dd"
+    astral_setup_uv:
+      version: "8.1.0"
+      commit: "08807647e7069bb48b6ef5acd8ec9567f424441b"
+handoff:
+  baseline_id: IB-001
+  direction: bmad-to-spec-kit
+  duplicate_implementation_loops: prohibited

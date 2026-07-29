@@ -1,0 +1,20 @@
+project: northstar-relay
+environment: pilot
+region: eu-west
+runtime:
+  orchestrator: docker-compose
+  services:
+    - web
+    - api
+    - worker
+    - postgres
+limits:
+  concurrent_users: 20
+  monthly_infrastructure_gbp: 400
+data:
+  canonical_store: postgres
+  backup_interval_hours: 24
+  restore_target_hours: 4
+secrets:
+  browser_exposure_allowed: false
+
