@@ -1,6 +1,6 @@
 ---
 artifact: ai-quality-contract
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 gate_policy: blocking
@@ -329,4 +329,3 @@ case-level failures, human-review summaries, and comparisons. The decision is:
   incomplete.
 
 Only PASS is releasable.
-

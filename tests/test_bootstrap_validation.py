@@ -1,4 +1,3 @@
-from pathlib import Path
 import contextlib
 import hashlib
 import importlib.util
@@ -7,7 +6,7 @@ import json
 import re
 import tempfile
 import unittest
-
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -243,16 +242,33 @@ class BootstrapValidatorBehaviorTests(unittest.TestCase):
             / "tasks.md"
         ).read_text(encoding="utf-8")
         required_commands = (
-            "uv lock --project services/backend --check "
-            "--python 3.12.13 --managed-python",
-            "uv sync --project services/backend --locked "
-            "--all-groups --no-install-project --python 3.12.13 "
-            "--managed-python",
-            "uv run --project services/backend --no-sync pytest "
-            "tests/e2e/test_compose_readiness.py",
+            (
+                "uv lock --project services/backend --check "
+                "--python 3.12.13 --managed-python"
+            ),
+            (
+                "uv sync --project services/backend --locked "
+                "--all-groups --no-install-project --python 3.12.13 "
+                "--managed-python"
+            ),
+            (
+                "uv run --project services/backend --no-sync pytest "
+                "tests/e2e/test_compose_readiness.py"
+            ),
         )
         for command in required_commands:
             self.assertIn(f"`{command}`", tasks)
+
+    def test_make_gates_require_the_pinned_node_toolchain(self) -> None:
+        makefile = (PROJECT_ROOT / "Makefile").read_text(encoding="utf-8")
+
+        self.assertIn("NODE_VERSION := v24.18.0", makefile)
+        self.assertIn("PNPM_VERSION := 11.17.0", makefile)
+        for target in ("install", "check", "contracts-generate", "contracts-check"):
+            declaration = next(
+                line for line in makefile.splitlines() if line.startswith(f"{target}:")
+            )
+            self.assertIn("node-toolchain-check", declaration)
 
     def test_live_task_headings_use_required_stage_labels(self) -> None:
         tasks = (
@@ -311,7 +327,10 @@ class BootstrapValidatorBehaviorTests(unittest.TestCase):
         self.assertTrue(expected_backend <= set(backend))
         self.assertTrue(expected_workspace <= set(workspace))
         self.assertEqual("9.39.2", frontend["eslint"])
+        self.assertEqual("49.0.0", backend_runtime["cryptography"])
         self.assertEqual("6.0.3", backend_runtime["pyyaml"])
+        self.assertEqual("2.0.51", backend_runtime["sqlalchemy[asyncio]"])
+        self.assertEqual("2025.0.1", backend_runtime["uuid6"])
         self.assertEqual("0.11.16", backend_build["uv_build"])
 
     def test_rejects_unclassified_shipped_bmad_support_files(self) -> None:

@@ -1,6 +1,6 @@
 # Data Model: Walking Skeleton
 
-Baseline: IB-001  
+Baseline: IB-002
 Feature: 001  
 Canonical store: PostgreSQL
 
@@ -9,7 +9,9 @@ Canonical store: PostgreSQL
 - Identifiers are server-generated, canonical lowercase UUIDv7 values.
 - Database timestamps are timezone-aware UTC.
 - Durable rows include `created_at`; mutable control rows also include
-  `updated_at`.
+  `updated_at`. The immutable `DeletionCompletion` uses its database-supplied
+  `completed_at` as its creation timestamp because the row is created only when
+  deletion commits.
 - Workspace scope is present on top-level aggregate and job records and is
   derived from trusted server context.
 - JSON columns store a validated, versioned document plus its SHA-256 canonical
@@ -96,7 +98,7 @@ Invariants:
 
 The signed cookie contains an opaque session identifier and integrity
 protection. Lookup compares hashes in constant time. Expired or revoked sessions
-cannot derive workspace context. The sole exception is the reset route's
+cannot derive the old workspace context. The sole exception is the reset route's
 short-lived replay branch: it may cryptographically verify a revoked cookie and
 use its one-way fingerprint to find an unexpired `ResetReplayReceipt`; it never
 restores the old workspace context.
@@ -112,13 +114,15 @@ restores the old workspace context.
 | `updated_at` | timestamp | Changes only when a revision is appended |
 
 Unique and access rule: every read or mutation selects by both `id` and the
-server-derived `workspace_id`.
+server-derived `workspace_id`. The database also declares
+`UNIQUE (workspace_id, id)` as the candidate key for scoped child references.
 
 ### DecisionRevision
 
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key |
+| `workspace_id` | UUID | Indexed server-derived scope; must match the parent Decision workspace |
 | `decision_id` | UUID | References Decision |
 | `revision` | integer | Positive and unique per decision |
 | `frame_schema_version` | string | `1.0` for this feature |
@@ -131,7 +135,12 @@ server-derived `workspace_id`.
 | `created_at` | timestamp | Database supplied |
 
 Decision revisions are append-only. The database unique constraint is
-`(decision_id, revision)`.
+`(decision_id, revision)`. A composite foreign key
+`(workspace_id, decision_id)` references the parent Decision's matching
+workspace-scoped identity. The database also declares
+`UNIQUE (workspace_id, decision_id, id)` as the candidate key that prevents a
+Run from pairing one Decision with another Decision's revision. Application
+reads include the server-derived workspace column.
 
 ### Run
 
@@ -154,12 +163,20 @@ Decision revisions are append-only. The database unique constraint is
 
 Allowed transitions are `queued → running → completed` and
 `queued|running → failed`. Terminal rows cannot transition again.
+The composite foreign key
+`(workspace_id, decision_id, decision_revision_id)` references
+`DecisionRevision (workspace_id, decision_id, id)`, so every Run snapshot is
+bound to a revision of its own Decision rather than merely another revision in
+the same workspace.
+The database declares `UNIQUE (workspace_id, id)` as the candidate key for
+scoped RunEvent references.
 
 ### RunEvent
 
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key |
+| `workspace_id` | UUID | Indexed server-derived scope; must match the parent Run workspace |
 | `run_id` | UUID | References Run |
 | `sequence` | integer | Begins at 1; unique and contiguous per run |
 | `kind` | RunEventKind | Determines payload schema |
@@ -169,8 +186,10 @@ Allowed transitions are `queued → running → completed` and
 | `created_at` | timestamp | Database supplied |
 
 The unique constraint `(run_id, sequence)` and row lock on Run prevent duplicate
-sequence allocation. `ui.envelope` payloads validate against the controlled UI
-schema before insertion.
+sequence allocation. A composite foreign key `(workspace_id, run_id)`
+references the parent Run's matching workspace-scoped identity, and application
+reads include both columns. `ui.envelope` payloads validate against the
+controlled UI schema before insertion.
 
 ### Job
 
@@ -192,7 +211,30 @@ schema before insertion.
 
 A worker claims one job using an ordered `FOR UPDATE SKIP LOCKED` transaction.
 An expired leased job becomes claimable. Execution reads durable run state and
-must not insert a second terminal event.
+must not insert a second terminal event. A `delete-workspace` job is durable and
+lease-recoverable until its successful deletion transaction. That transaction
+inserts `DeletionCompletion`, marks the attempt successful, and deletes the
+workspace atomically. The workspace cascade intentionally removes the
+workspace-owned job, while the non-sensitive completion record remains.
+
+### DeletionCompletion
+
+| Field | Type | Rules |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `workspace_id` | UUID | Server-derived deleted-workspace scope; indexed and deliberately has no foreign key |
+| `operation` | string | Constant `delete-guest-workspace-v1` |
+| `job_id` | UUID | Unique identifier copied from the completed deletion job; deliberately has no foreign key |
+| `completed_at` | timestamp | Database supplied in the successful deletion transaction |
+
+The unique constraints are `(workspace_id, operation)` and `(job_id)`, so a
+retry cannot create a second completion record. This audit-only row contains no
+workspace payload, source, decision, run, session token, request body, or other
+user-authored content. It is never used to authorize or reconstruct a deleted
+workspace and is excluded from guest responses and telemetry. It is the
+non-sensitive deletion completion record required by `QUALITY-OPS-001`; later
+features extend deletion audit state for the data types they introduce without
+retaining deleted private content.
 
 ### IdempotencyRecord
 
@@ -215,15 +257,23 @@ hash returns the original response. Same key with another hash returns conflict.
 ### ResetReplayReceipt
 
 This operational receipt is deliberately not owned by or foreign-keyed to a
-guest workspace. Deleting the old overlay and its session therefore cannot
-destroy the narrow retry capability required after a lost reset response.
+guest workspace. It is the bounded non-workspace operational-receipt exception
+defined by Constitution Article VI: it has no `workspace_id` or raw
+user-authored content, cannot derive or restore the triggering or revoked
+workspace identity or context, cannot itself authorize a workspace, and is
+reachable only through the separately verified one-way old-session fingerprint.
+It may reproduce only the already-committed replacement response and credential;
+ordinary GuestSession verification on a later request is the only step that
+derives replacement workspace context. Deleting the old overlay and its session
+therefore cannot destroy the narrow retry capability required after a lost reset
+response.
 
 | Field | Type | Rules |
 |---|---|---|
 | `id` | UUID | Primary key |
 | `old_session_fingerprint` | bytes | One-way fingerprint derived from the verified old cookie; never the raw token |
 | `operation` | string | Constant `reset-guest-session-v1` |
-| `key` | string | Original 8–128-character idempotency key |
+| `key_hash` | bytes | Domain-separated SHA-256 of the original 8–128-character idempotency key; raw key is never stored |
 | `request_hash` | string | SHA-256 of versioned operation, method, path, query, and canonical body; excludes cookie and idempotency header |
 | `replacement_session_id` | UUID | Copied replacement identifier for audit/reconstruction; intentionally has no cascading foreign key |
 | `replacement_token_hash` | bytes | Copy of the one-way token hash inserted with the replacement session; used for constant-time post-decrypt verification |
@@ -242,8 +292,13 @@ destroy the narrow retry capability required after a lost reset response.
 | `expires_at` | timestamp | Exactly ten minutes after original reset commit |
 | `created_at` | timestamp | Database supplied by the original reset transaction |
 
+`key_hash` is exactly SHA-256 over the UTF-8 bytes of
+`ai-cto-cockpit/reset-replay/idempotency-key/v1`, followed by one NUL byte and
+the raw idempotency key. This domain is versioned and must be shared by receipt
+insertion and lookup.
+
 The unique constraint is
-`(old_session_fingerprint, operation, key)`. On a reset retry, a constant-time
+`(old_session_fingerprint, operation, key_hash)`. On a reset retry, a constant-time
 request-hash match returns `response_body_bytes` unchanged and deterministically
 recreates the exact original `Set-Cookie` value from the decrypted token and
 fixed cookie fields. The route derives the token hash after decryption and
@@ -252,7 +307,7 @@ same-key hash mismatch is a conflict. A different key or missing or expired
 receipt is unauthorized because the old session remains revoked.
 
 AEAD associated data is the canonical encoding of `id`,
-`old_session_fingerprint`, `operation`, `key`, `request_hash`,
+`old_session_fingerprint`, `operation`, `key_hash`, `request_hash`,
 `replacement_session_id`, `replacement_token_hash`,
 `encryption_key_id`, `aad_version`, `cookie_profile_version`, `cookie_signing_key_id`,
 `cookie_issued_at`, `cookie_expires_at`, `response_status`,
@@ -271,8 +326,10 @@ replayed directly.
 
 Receipts are purged after expiry independently of workspace deletion. The
 ciphertext is decrypted only in the reset replay branch and never logged. A
-receipt contains no workspace ID, source, decision, run, event, UI payload, or
-other user-authored content.
+receipt contains no workspace ID, raw idempotency key, source, decision, run,
+event, UI payload, or other raw user-authored content. Its exact response bytes
+are server-authored and its encrypted token can only reproduce the
+already-committed replacement credential; neither field authorizes a workspace.
 
 ## Value objects
 

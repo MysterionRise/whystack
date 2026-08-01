@@ -1,8 +1,8 @@
 ---
 feature_id: "001"
 status: "implementation-in-progress"
-inception_baseline: "IB-001"
-constitution_version: "1.0.0"
+inception_baseline: "IB-002"
+constitution_version: "2.0.0"
 ---
 
 # Implementation Plan: Walking Skeleton
@@ -23,7 +23,7 @@ fixtures instead of retrieval or a model provider.
 | Typed interfaces | OpenAPI 3.1 and JSON Schema 2020-12 define the public boundary; generated TypeScript is checked. | Pass |
 | User-owned memory | Memory is absent from this slice; no inferred or durable preference is created. | Pass |
 | Product-owned presentation | Only `recommendation-summary@1.0` and the disabled `view-evidence` action are accepted; loading, empty, partial-evidence, abstention, error, reconnect, and completed states remain product-owned. | Pass |
-| Privacy and scope | Signed guest context or local deployment derives workspace; denial occurs before side effects. | Pass |
+| Privacy and scope | Signed guest context or local deployment derives workspace; every workspace-owned row carries scope. The raw-user-content-free ten-minute reset receipt is the constitution's bounded non-workspace operational exception: it cannot recover the revoked workspace or authorize scope, while ordinary verification of its replayed replacement credential may derive replacement scope. | Pass |
 | Test-first delivery | `tasks.md` creates each behavioral test before its production path. | Pass |
 | Durable and observable runs | Input snapshots, jobs, ordered events, terminal state, replay, readiness, and redaction are included. | Pass |
 | Performance and spend | A fake-model load test exercises the four-second first-useful-UI target; provider spend is zero. | Pass |
@@ -143,7 +143,7 @@ infra/
    overlay. If the response is lost, the reset route may verify the signature
    and well-formed immutable claims of the revoked old cookie, derive its
    fingerprint, and replay only the unexpired receipt with the same idempotency
-   key and request hash. The receipt lifetime—not the old session's now-revoked
+   key hash and request hash. The receipt lifetime—not the old session's now-revoked
    business expiry—is the replay deadline. The route decrypts the replacement
    token, verifies its hash against the receipt in constant time, and uses the
    receipt's fixed issue/expiry fields with the deterministic cookie serializer
@@ -191,9 +191,10 @@ infra/
   stored as a one-way hash.
 - A revoked guest cookie is unauthorized everywhere except the reset replay
   branch. That branch first verifies the cookie cryptographically, then requires
-  an unexpired receipt matching its fingerprint, operation, idempotency key, and
-  normalized request hash. A same-key hash mismatch is HTTP 409; a different
-  key, missing/expired receipt, or any other use is HTTP 401.
+  an unexpired receipt matching its fingerprint, operation, domain-separated
+  idempotency-key hash, and normalized request hash. A same-key request-hash
+  mismatch is HTTP 409; a different key, missing/expired receipt, or any other
+  use is HTTP 401.
 - Replacement session material in a reset replay receipt is encrypted with an
   authenticated, domain-separated key derived from the session key ring and is
   deleted when the ten-minute receipt expires. The receipt stores no workspace
@@ -202,7 +203,7 @@ infra/
   available for at least the maximum receipt lifetime so restart or key rotation
   cannot change an in-window replay.
 - AEAD associated data binds the receipt ID, old-session fingerprint, operation,
-  idempotency key, request hash, replacement-session ID and token hash, cookie
+  idempotency-key hash, request hash, replacement-session ID and token hash, cookie
   profile, encryption/signing-key IDs, fixed cookie timestamps, receipt
   timestamps, response status/content type/serializer version, and response-byte
   hash. After decryption, the route constant-time compares the derived token
@@ -240,6 +241,9 @@ infra/
   backend UUID implementation; the API accepts only canonical lowercase UUIDv7.
 - Timestamps are timezone-aware UTC values supplied by the database.
 - Decision revisions use a unique `(decision_id, revision)` constraint.
+- Runs bind `(workspace_id, decision_id, decision_revision_id)` to the matching
+  DecisionRevision candidate key, preventing a same-workspace Run from
+  snapshotting another Decision's revision.
 - A revision stores each criterion's exact bounded decimal-string
   `entered_weight` and integer-derived four-place-string `normalized_weight`;
   normalized values total exactly `100.0000`. Normalization converts the
@@ -252,7 +256,9 @@ infra/
 - Idempotency uniqueness is `(workspace_id, operation, key)`, with a normalized
   request hash to detect conflicting reuse.
 - Reset replay uses a separate uniqueness key
-  `(old_session_fingerprint, operation, key)`. Its request hash excludes the
+  `(old_session_fingerprint, operation, key_hash)`. `key_hash` is the
+  domain-separated SHA-256 digest of the raw caller idempotency key; the raw key
+  is never persisted. Its request hash excludes the
   cookie and idempotency header but includes the versioned operation, method,
   path, query, and canonical body. Receipts expire ten minutes after the
   original commit and are purged independently of guest-workspace deletion.
@@ -261,6 +267,11 @@ infra/
 - Jobs have `available_at`, `lease_owner`, `lease_expires_at`, `attempt_count`,
   and terminal status. A partial worker attempt resumes by reading the run event
   watermark.
+- Successful guest deletion inserts one non-sensitive `DeletionCompletion` in
+  the same transaction that deletes the workspace. The workspace-owned job
+  cascades away; the completion row retains only server-derived workspace/job
+  IDs, a fixed operation, and completion time, has no parent foreign key, and
+  is never an authorization source.
 - Guest reset creates the replacement guest session, revokes the old session,
   inserts a deletion job, and inserts its replay receipt in one transaction.
 
@@ -280,8 +291,12 @@ differ.
 
 The frontend closed-parser suite includes generated unknown-version, kind,
 field, action, markup, script, URL, prototype, oversize, and recursive
-payloads. Every malicious case returns the safe typed failure and produces zero
-HTML, JavaScript, route, or network action execution.
+payloads. Markup, script, URL, and route cases attempt to add unauthorized
+fields or action capabilities; approved title, rationale, disclaimer, and label
+values remain inert text and are never interpreted as markup or a URL. Every
+malicious case returns only `{ ok: false, error: { code:
+"invalid_ui_envelope" } }`, without raw input or validator diagnostics, and
+produces zero HTML, JavaScript, route, or network action execution.
 
 ## Tooling maintenance boundaries
 
@@ -294,7 +309,7 @@ verification, and preserves the previously recorded RED evidence.
 |---|---|
 | T005 | `uv_build==0.11.16` and direct `pyyaml==6.0.3`; convert the backend to an installable `src` package |
 | T007 | `eslint==9.39.2`; applied early by `IM-001` because the pre-T005 blocking `make check`/CI gate owns the same compatibility boundary; confirm the pin and retain every accepted Next.js lint rule |
-| T009 | `uuid6==2025.0.1` and `cryptography==49.0.0`; AES-256-GCM with a fresh random 96-bit nonce and the `data-model.md` associated data |
+| T009 | `uuid6==2025.0.1` and `cryptography==49.0.0`; `IM-003` changes the existing `sqlalchemy==2.0.51` pin to install as `sqlalchemy[asyncio]==2.0.51` with locked `greenlet==3.5.4`; AES-256-GCM with a fresh random 96-bit nonce and the `data-model.md` associated data |
 | T014 | `hypothesis==6.160.0` |
 | T021 | `opentelemetry-sdk==1.44.0` and `opentelemetry-exporter-otlp-proto-http==1.44.0`; manual allowlisted instrumentation |
 | T024 | `jsdom==29.1.1`, `@testing-library/react==16.3.2`, `@testing-library/dom==10.4.1`, and `@testing-library/user-event==14.6.1` |
@@ -307,10 +322,10 @@ verification, and preserves the previously recorded RED evidence.
 | Static quality gates | `make check` |
 | Backend unit and contract tests | `uv run --project services/backend pytest services/backend/tests/unit services/backend/tests/contracts` |
 | Backend integration and security tests | `uv run --project services/backend pytest services/backend/tests/integration services/backend/tests/api services/backend/tests/security services/backend/tests/property` |
-| Frontend unit tests | `pnpm --dir apps/web test` |
-| Frontend type and lint checks | `pnpm --dir apps/web check` |
+| Frontend unit tests | `corepack pnpm --dir apps/web test` |
+| Frontend type and lint checks | `corepack pnpm --dir apps/web check` |
 | Compose readiness | `docker compose -f infra/compose.yaml up --build --wait` |
-| End-to-end tests | `pnpm --dir apps/web test:e2e` |
+| End-to-end tests | `corepack pnpm --dir apps/web test:e2e` |
 | Contract drift | `make contracts-check` |
 | Feature evaluation | `make eval-feature FEATURE=001` |
 

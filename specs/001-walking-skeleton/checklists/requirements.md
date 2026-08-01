@@ -1,6 +1,6 @@
 # Requirements Checklist: Walking Skeleton
 
-Reviewed against inception baseline `IB-001` and constitution `1.0.0`.
+Reviewed against inception baseline `IB-002` and constitution `2.0.0`.
 
 ## Product and scope
 

@@ -1,6 +1,6 @@
 ---
 artifact: system-test-design
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 risk_model: P0-P3
@@ -37,7 +37,7 @@ journeys remain safe.
 
 | Risk | Priority | Preventive control | Detecting test |
 |---|---|---|---|
-| Cross-workspace canonical or vector access | P0 | Server-derived scope on every record/query | 10,000 randomized isolation operations plus crafted vector filters |
+| Cross-workspace canonical or vector access | P0 | Server-derived scope on every workspace-owned record/query | 10,000 randomized isolation operations plus crafted vector filters |
 | Indirect prompt injection changes policy or reveals secrets | P0 | Untrusted-content boundary, no consequential tools, strict output schemas | 100-case attack corpus across sources and run stages |
 | Failed/unknown hard constraint is recommended | P0 | Deterministic fail-closed constraint service | Property tests and every constrained evaluation case |
 | Fabricated or shifted citation | P0 | Immutable revisions, locator validation, one repair maximum | Locator mutation, deletion, parser-version, and adversarial citation cases |
@@ -130,6 +130,8 @@ memory selection, or recommendation policy.
 
 - Indirect and direct prompt-injection corpus.
 - Cross-workspace randomized and targeted access attempts.
+- Reset-replay receipt expiry, deletion survival, content minimization, bound
+  ciphertext/AAD substitution, and inability to derive workspace context.
 - Canary credentials and private passages through success, validation, repair,
   timeout, retry, export, trace, and error paths.
 - Connector path traversal, symlink, hook, submodule, archive, unsafe URL,
@@ -219,4 +221,3 @@ A release can proceed only when:
 - manual accessibility and moderated-usability acceptance pass;
 - clean-clone deployment and provenance verification pass;
 - the release manifest is complete and attributable.
-

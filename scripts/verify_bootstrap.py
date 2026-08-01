@@ -1456,14 +1456,16 @@ def validate_sdlc_wiring(root: Path) -> list[ValidationIssue]:
             {},
         )
         for name in (
+            "cryptography",
             "fastapi",
             "pydantic",
             "pydantic-settings",
             "langgraph",
-            "sqlalchemy",
+            "sqlalchemy[asyncio]",
             "alembic",
             "psycopg[binary]",
             "pyyaml",
+            "uuid6",
             "uvicorn",
         ):
             required_pins[f"backend.{name}"] = backend.get(name)

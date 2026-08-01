@@ -1,6 +1,6 @@
 ---
 artifact: product-requirements-document
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---
@@ -243,9 +243,20 @@ Release gates require 100% resolvable locators, citation precision of at least
 
 ### NFR-002 — Tenant isolation and authorization
 
-Every canonical and derived record carries a workspace scope derived from
-signed or authenticated server context. Automated isolation tests must find
-zero cross-workspace reads or writes across 10,000 randomized operations.
+Every workspace-owned canonical and derived record carries a workspace scope
+derived from signed or authenticated server context. A non-workspace
+operational receipt is permitted only under Constitution Article VI's bounded
+exception: it survives the triggering workspace's deletion for a short,
+explicit lifetime, contains no workspace ID or raw user-authored content, and
+is reachable only through a separately verified one-way fingerprint. It may
+retain only the fixed metadata, one-way caller-input hashes, exact
+server-authored response bytes, and authenticated encrypted replacement
+credential material defined by the feature data model. It cannot contain,
+restore, or derive the triggering or revoked workspace identity or context and
+cannot itself authorize any workspace; ordinary verification of the replayed
+replacement credential is the only path that may derive replacement workspace
+context. Automated isolation tests must find zero cross-workspace reads or
+writes across 10,000 randomized operations.
 
 ### NFR-003 — Untrusted-content and data-egress security
 

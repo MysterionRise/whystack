@@ -1,6 +1,6 @@
 ---
 artifact: implementation-readiness
-baseline: IB-001
+baseline: IB-002
 status: pass
 date: 2026-07-27
 verdict: PASS
@@ -154,8 +154,24 @@ Implementation remains subject to these gates:
 
 ## Handoff
 
-Baseline `IB-001` is the product authority for the initial Spec Kit product map
+Baseline `IB-002` is the product authority for the initial Spec Kit product map
 and walking-skeleton feature. Feature-local discoveries update that feature.
 Changes to personas, outcomes, deployment profiles, data egress, UI authority,
 canonical storage, consequential actions, or blocking quality thresholds reopen
 BMAD through a numbered baseline change request.
+
+## IB-002 change-readiness review
+
+`CR-001` clarifies the already accepted reset-replay boundary without changing
+the persona, outcome, experience, deployment profiles, canonical store, UI
+authority, data egress, or any quality threshold. Product and experience impact
+are none. Architecture and security impact are limited to distinguishing
+workspace-owned rows from a raw-user-content-free ten-minute operational receipt that
+contains no raw caller content, cannot recover the triggering or revoked
+workspace, and cannot itself authorize any workspace. The receipt may reproduce
+only its already-committed replacement response; ordinary session verification
+derives replacement scope. Feature 001 has no deployed domain tables or stored
+user data before T009, so no data migration is required; migration
+`0001_walking_skeleton` will encode the clarified model directly. The existing
+workspace-isolation, reset-replay, migration, deletion, and cryptographic
+negative tests are sufficient evaluation coverage. Readiness remains `PASS`.

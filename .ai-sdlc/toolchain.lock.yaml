@@ -126,14 +126,16 @@ implementation_bootstrap:
     build_system:
       uv_build: "0.11.16"
     direct_dependencies:
+      alembic: "1.18.5"
+      cryptography: "49.0.0"
       fastapi: "0.140.1"
+      langgraph: "1.2.9"
+      "psycopg[binary]": "3.3.4"
       pydantic: "2.13.4"
       pydantic-settings: "2.14.2"
-      langgraph: "1.2.9"
-      sqlalchemy: "2.0.51"
-      alembic: "1.18.5"
-      "psycopg[binary]": "3.3.4"
       pyyaml: "6.0.3"
+      "sqlalchemy[asyncio]": "2.0.51"
+      uuid6: "2025.0.1"
       uvicorn: "0.51.0"
     direct_development_dependencies:
       pytest: "9.1.1"
@@ -168,6 +170,6 @@ bootstrap_validation:
       version: "6.4.0"
       commit: "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e"
 handoff:
-  baseline_id: IB-001
+  baseline_id: IB-002
   direction: bmad-to-spec-kit
   duplicate_implementation_loops: prohibited

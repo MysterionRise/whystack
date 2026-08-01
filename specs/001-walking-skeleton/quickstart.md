@@ -7,8 +7,8 @@ It is also the convergence command list for T034.
 
 - Docker Engine with Docker Compose v2
 - Python 3.12 and `uv`
-- The active Node.js LTS selected in `.ai-sdlc/toolchain.lock.yaml`
-- `pnpm` through Corepack
+- Node.js `24.18.0`, selected from `.node-version`
+- Corepack pnpm `11.17.0`
 - GNU Make
 
 No model-provider credential is required for this feature.
@@ -45,14 +45,15 @@ Run:
 
 ```sh
 ./scripts/verify-bootstrap.sh
+make node-toolchain-check
 make install
 make check
 make contracts-check
-uv run --project services/backend pytest
-uv run --project services/backend pytest tests/e2e/test_compose_readiness.py
-pnpm --dir apps/web check
-pnpm --dir apps/web test
-pnpm --dir apps/web test:e2e
+uv run --project services/backend --locked pytest
+uv run --project services/backend --locked pytest tests/e2e/test_compose_readiness.py
+corepack pnpm --dir apps/web check
+corepack pnpm --dir apps/web test
+corepack pnpm --dir apps/web test:e2e
 make eval-feature FEATURE=001
 ```
 

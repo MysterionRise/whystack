@@ -1,6 +1,6 @@
 ---
 artifact: product-brief
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---
@@ -173,4 +173,3 @@ Product success for the first public release requires:
   inference disclosure and disabled-by-default connectors.
 - Framework ceremony could dominate delivery. Mitigation: BMAD stops at
   readiness and Spec Kit is the only implementation loop.
-

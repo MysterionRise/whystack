@@ -44,8 +44,8 @@ The complete ownership and change-control rules live in
 
 ## Current walking skeleton
 
-Feature `001-walking-skeleton` currently provides a process-only Compose
-topology:
+Feature `001-walking-skeleton` currently provides a contract-and-persistence
+walking skeleton on the five-process Compose topology:
 
 - a Next.js web process with a health endpoint;
 - a FastAPI process with separate liveness and dependency-readiness endpoints;
@@ -54,6 +54,15 @@ topology:
 - Qdrant as a derived, rebuildable store that is readiness-only in feature 001;
 - canonical Pydantic public contracts with deterministic checked OpenAPI and
   controlled-UI JSON Schema artifacts;
+- deterministic generated TypeScript types plus a fail-closed runtime parser
+  that accepts only `recommendation-summary@1.0` and the disabled
+  `view-evidence` action;
+- Alembic migration `0001_walking_skeleton`, applied before API readiness, for
+  the workspace, session, decision, run/event, job, idempotency, and bounded
+  reset-replay records;
+- workspace-scoped persistence primitives and caller-owned transaction
+  boundaries, with exact reset-response bytes and AES-256-GCM-protected
+  replacement-token material for the later reset route;
 - isolated Compose networks and persistent service volumes.
 
 No retrieval, provider calls, recommendation intelligence, long-term memory,
@@ -67,8 +76,16 @@ The current Spec Kit status is:
 - T004–T005 are complete: preserved contract-generation RED evidence,
   fail-closed canonical Pydantic contracts, and deterministic generated
   artifacts.
-- T006 is the next unstarted task. The T008 persistence lane is also eligible
-  only after review under the explicit parallel-work boundary.
+- T006–T007 are complete: retained frontend-contract RED evidence, generated
+  TypeScript contracts, a strict runtime validator, and closed-parser fuzz
+  coverage.
+- T008–T009 are complete: retained migration/model RED evidence, the canonical
+  PostgreSQL schema, scoped repositories, reset-replay cryptographic primitives,
+  and exact migration-head readiness at `0001_walking_skeleton`.
+- The structured T006–T009 execution record is
+  [`specs/001-walking-skeleton/evidence/t006-t009-execution.md`](specs/001-walking-skeleton/evidence/t006-t009-execution.md).
+- T010 is the next unstarted task. Trusted session/context behavior and every
+  application route beyond the existing health surface remain unimplemented.
 
 ## Developer workflow
 
@@ -76,6 +93,9 @@ Use the versions pinned in [`.node-version`](.node-version),
 [`.python-version`](.python-version), and
 [`.ai-sdlc/toolchain.lock.yaml`](.ai-sdlc/toolchain.lock.yaml). Docker Desktop
 or another Docker Compose v2 environment is required for the topology test.
+Select Node.js `24.18.0` with your version manager before invoking Make; the
+Make gates fail early unless Node.js `24.18.0` and Corepack pnpm `11.17.0` are
+active.
 
 Install only from committed locks:
 
@@ -87,12 +107,14 @@ Run the packet and static quality gates:
 
 ```bash
 ./scripts/verify-bootstrap.sh
+make node-toolchain-check
 make check
 make contracts-check
 ```
 
-`make contracts-check` verifies both semantic equivalence with the binding
-feature contracts and byte-for-byte generated-artifact drift.
+`make contracts-generate` regenerates the backend artifacts first and then the
+frontend bindings. `make contracts-check` verifies semantic equivalence with
+the binding feature contracts plus byte-for-byte backend and frontend drift.
 
 Inspect pinned tool versions and run the self-cleaning Compose acceptance test:
 
@@ -106,6 +128,15 @@ tests, strict Pyright including backend tests, and the frontend ESLint and
 TypeScript checks. The Compose test creates a unique project, builds and waits
 for every process, verifies PostgreSQL/Alembic and Qdrant readiness, and removes
 only that project's containers and volumes.
+
+The task-owned contract and persistence suites can also be run directly:
+
+```bash
+corepack pnpm --dir apps/web test -- ui-envelope-contract.test.ts
+uv run --project services/backend --locked pytest \
+  services/backend/tests/integration/test_migrations.py \
+  services/backend/tests/unit/test_persistence_models.py
+```
 
 ## Start here
 

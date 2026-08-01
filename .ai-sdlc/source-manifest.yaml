@@ -1,5 +1,5 @@
 schema_version: 1
-baseline_id: IB-001
+baseline_id: IB-002
 created_on: "2026-07-27"
 policy:
   public_distribution: original-or-verified-license-only

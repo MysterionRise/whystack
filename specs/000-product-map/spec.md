@@ -2,7 +2,7 @@
 feature_id: "000"
 title: "Product delivery map"
 status: "baseline"
-inception_baseline: "IB-001"
+inception_baseline: "IB-002"
 bmad_epics:
   - EPIC-001
   - EPIC-002
@@ -25,7 +25,7 @@ artifacts remain authoritative for product intent and cross-cutting decisions.
 
 | Feature | BMAD epic | Outcome | Primary requirements | Entry condition |
 |---|---|---|---|---|
-| `001-walking-skeleton` | `EPIC-001` | A seeded guest creates a versioned decision and receives a persisted, replayable controlled-UI response from a deterministic fake model. | `FR-001`, `FR-003`, `FR-006`, `FR-011`; `NFR-002`, `NFR-004`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-011` | `IB-001` accepted |
+| `001-walking-skeleton` | `EPIC-001` | A seeded guest creates a versioned decision and receives a persisted, replayable controlled-UI response from a deterministic fake model. | `FR-001`, `FR-003`, `FR-006`, `FR-011`; `NFR-002`, `NFR-004`, `NFR-007`, `NFR-008`, `NFR-009`, `NFR-011` | `IB-002` accepted |
 | `002-grounded-decision` | `EPIC-002` | The product ingests the seed corpus, retrieves authorized evidence, applies typed constraints, ranks options, and recommends or abstains with attributable evidence. | `FR-002`, `FR-004`, `FR-005`, evidence portions of `FR-012`; `NFR-001`, `NFR-002`, `NFR-003`, `NFR-004`, `NFR-005`, `NFR-006`, `NFR-008`, `NFR-009`, `NFR-011`, `NFR-012` | Feature 001 converged |
 | `003-outcome-to-memory` | `EPIC-003` | Explicit outcomes become auditable events, export as cited ADR and JSON artifacts, and approved memory changes a related later decision with a visible explanation. | `FR-007`, `FR-008`, `FR-009`, memory/delta portions of `FR-012`, second-decision portion of `FR-011`; `NFR-002`, `NFR-003`, `NFR-004`, `NFR-007`, `NFR-008`, `NFR-010`, `NFR-011` | Feature 002 converged |
 | `004-live-connectors` | `EPIC-004` | Local-data mode reads permitted repositories, files, GitHub resources, and bounded web sources through resumable, observable sync jobs. | `FR-002`, `FR-010`, local-mode policy from `FR-001`; `NFR-002`, `NFR-003`, `NFR-004`, `NFR-008`, `NFR-009`, `NFR-010`, `NFR-011`, `NFR-012` | Feature 003 converged |

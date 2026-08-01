@@ -67,8 +67,9 @@ BMAD produces:
 6. risk-based system test design and AI quality thresholds;
 7. an implementation-readiness verdict.
 
-The accepted artifacts are frozen as `IB-001`. The baseline manifest records
-the framework versions, artifact paths, hashes, scope, and readiness state.
+Accepted artifacts are frozen under a numbered `IB-NNN` baseline. The active
+baseline manifest records its predecessor and change request when applicable,
+plus framework versions, artifact paths, hashes, scope, and readiness state.
 
 ### Delivery
 

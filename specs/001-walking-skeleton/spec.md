@@ -2,7 +2,7 @@
 feature_id: "001"
 title: "Walking skeleton"
 status: "implementation-in-progress"
-inception_baseline: "IB-001"
+inception_baseline: "IB-002"
 bmad_epics:
   - EPIC-001
 bmad_requirements:
@@ -358,12 +358,13 @@ artifacts must match generation output. Traces to `NFR-011`.
 11. An API denial is authoritative even if a client hides or displays a control
     incorrectly.
 12. A reset replay receipt expires ten minutes after the original reset. It is
-    not workspace-owned and may contain only session fingerprints, idempotency
-    metadata, encrypted replacement-session material needed to reconstruct the
-    cookie, fixed cookie issue/expiry values, the original reset response, and
-    receipt timestamps—never source, decision, run, or other user content.
+    not workspace-owned and may contain only one-way session and idempotency-key
+    hashes, fixed operational metadata, encrypted replacement-session material
+    needed to reconstruct the cookie, fixed cookie issue/expiry values, the
+    server-authored original reset response, and receipt timestamps—never the
+    raw idempotency key, source, decision, run, or other raw user content.
 13. Receipt encryption uses authenticated associated data binding the receipt
-    identity, old-session fingerprint, operation, key, request hash,
+    identity, old-session fingerprint, operation, idempotency-key hash, request hash,
     replacement-session identity and token hash, encryption/signing key IDs,
     cookie profile and fixed timestamps, receipt timestamps, response status,
     content type, serializer version, and response-byte hash. Decrypted
@@ -374,11 +375,11 @@ artifacts must match generation output. Traces to `NFR-011`.
 ## Data and contract impact
 
 The slice introduces `Workspace`, `GuestSession`, `Decision`,
-`DecisionRevision`, `Run`, `RunEvent`, `Job`, and `IdempotencyRecord`. Their
-fields and invariants are defined in `data-model.md`. It also introduces the
-short-lived, content-free `ResetReplayReceipt`, which deliberately lives outside
-the guest overlay so deletion of the old workspace cannot destroy reset replay
-semantics.
+`DecisionRevision`, `Run`, `RunEvent`, `Job`, `DeletionCompletion`, and
+`IdempotencyRecord`. Their fields and invariants are defined in `data-model.md`.
+It also introduces the short-lived, raw-user-content-free
+`ResetReplayReceipt`, which deliberately lives outside the guest overlay so
+deletion of the old workspace cannot destroy reset replay semantics.
 
 The executable API contract is `contracts/openapi.yaml`. The controlled component
 contract is `contracts/ui-envelope.schema.json`. Later feature contracts for
@@ -400,7 +401,14 @@ by name in the data model but do not gain endpoints in this slice.
   returns HTTP 409. A different key, an expired or missing receipt, or any
   non-reset use of the revoked cookie returns HTTP 401.
 - Reset replay receipts are purged after expiry independently of workspace
-  deletion and retain no source, decision, run, or other user-authored content.
+  deletion and retain no raw idempotency key, source, decision, run, or other
+  raw user-authored content.
+- Successful guest-overlay deletion removes the workspace plus its
+  workspace-owned content and operational rows, including the deletion job,
+  while retaining one non-sensitive audit row,
+  `DeletionCompletion` containing only server-derived workspace/job IDs, a fixed
+  operation, and completion time. It cannot authorize or reconstruct the
+  deleted workspace.
 - A database or migration failure makes readiness fail and prevents mutations.
 - Qdrant unavailability makes readiness fail because the deployment topology is
   being proven, although this feature does not write vectors.
@@ -468,6 +476,12 @@ by name in the data model but do not gain endpoints in this slice.
 - `QUALITY-UI-001` remains whole in this slice: generated markup, script, URL,
   prototype, oversize, and recursive payloads are included in the closed-parser
   fuzz suite, while focus-return and 200% zoom remain blocking browser checks.
+- In that closed-parser suite, markup, script, URL, and route payloads mean
+  attempts to introduce unauthorized executable or transport-bearing fields or
+  action kinds. Character sequences inside approved text fields remain inert
+  text and are never interpreted as markup, script, or a destination. A parser
+  failure exposes only `invalid_ui_envelope`, never raw input or validator
+  diagnostics.
 - `QUALITY-PERF-001` uses the accepted four-vCPU/eight-GiB Linux profile, five
   concurrent users, 20 warm-up turns, and at least 200 completed measured
   turns. The feature-local five-second fake-terminal target is stricter than
@@ -479,8 +493,17 @@ by name in the data model but do not gain endpoints in this slice.
 - Qdrant participates in readiness to prove deployment topology but is unused by
   business behavior until feature 002.
 - Guest reset revokes access synchronously and performs physical cleanup through
-  a durable background job. A content-free reset replay receipt survives that
-  cleanup for ten minutes so a lost response can be retried exactly.
+  a durable background job. A raw-user-content-free reset replay receipt survives that
+  cleanup for ten minutes so a lost response can be retried exactly. It is the
+  bounded non-workspace operational-receipt exception defined by Constitution
+  Article VI: it carries no `workspace_id` or raw caller content, cannot recover
+  the triggering or revoked workspace, and cannot itself authorize any
+  workspace. It is reachable only from a separately verified old-session
+  fingerprint and may reproduce only the already-committed replacement
+  response; ordinary replacement-session verification derives its workspace.
+- Every workspace-owned persistence row, including decision revisions and run
+  events, carries the server-derived `workspace_id`; child-row scope must match
+  its parent aggregate.
 - Decision requests carry bounded lossless decimal-string entered weights; the
   server preserves each exact string and visibly returns deterministic
   four-decimal-string normalized percentages totaling `100.0000`.

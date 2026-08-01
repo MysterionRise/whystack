@@ -1,7 +1,7 @@
 # Tasks: Walking Skeleton
 
 Feature: 001  
-Baseline: IB-001  
+Baseline: IB-002
 Owning epic: EPIC-001
 
 ## Execution rules
@@ -117,7 +117,7 @@ Owning epic: EPIC-001
   - Verify: backend contract tests and `make contracts-check` pass.
   - Depends on: T004.
 
-- [ ] **T006 — RED: specify frontend contract enforcement**
+- [X] **T006 — RED: specify frontend contract enforcement**
   - Parallel lane: `[P]` web contract lane, paired only with T007 and eligible
     to run concurrently with the T008–T009 persistence lane after T005 review.
   - Create `apps/web/tests/ui-envelope-contract.test.ts` with valid fixture,
@@ -125,16 +125,19 @@ Owning epic: EPIC-001
     UUID, and enabled evidence-action cases. Add a generated fuzz suite covering
     unknown version, kind, field, and action plus markup, script, URL,
     prototype, oversize, and recursive payloads.
-  - Assert that invalid input returns the safe typed failure rather than a
-    renderable component, with zero arbitrary HTML, JavaScript, route, or
-    network action execution.
+  - Treat markup, script, URL, and route fuzz cases as attempts to add
+    unauthorized fields or actions; approved text remains inert data. Assert
+    that invalid input returns only the closed typed failure
+    `{ ok: false, error: { code: "invalid_ui_envelope" } }`, with no raw input
+    or validator diagnostics, rather than a renderable component, and produces
+    zero arbitrary HTML, JavaScript, route, or network action execution.
   - Trace: `F-007`, `F-010`, `NFR-007`, `NFR-011`, `QUALITY-UI-001`,
     `QUALITY-SEC-001`; `AS-008`.
-  - Verify: `pnpm --dir apps/web test -- ui-envelope-contract.test.ts` fails
+  - Verify: `corepack pnpm --dir apps/web test -- ui-envelope-contract.test.ts` fails
     because generated types and validators are absent.
   - Depends on: T005.
 
-- [ ] **T007 — GREEN: implement generated TypeScript contracts**
+- [X] **T007 — GREEN: implement generated TypeScript contracts**
   - Parallel lane: `[P]` web contract lane; depends on its own RED task T006.
   - Confirm the task-owned `eslint==9.39.2` lock remains unchanged from
     `IM-001`. That isolated update was advanced to the pre-T005 repair because
@@ -148,13 +151,13 @@ Owning epic: EPIC-001
     `recommendation-summary@1.0` or a safe contract error.
   - Trace: `F-007`, `F-010`, `NFR-007`, `NFR-011`, `QUALITY-UI-001`,
     `QUALITY-SEC-001`; `AS-008`.
-  - Verify: T006 tests, `pnpm --dir apps/web check`, and
+  - Verify: T006 tests, `corepack pnpm --dir apps/web check`, and
     `make contracts-check` pass.
   - Depends on: T006.
 
 ## Phase C — Persistence and trusted context
 
-- [ ] **T008 — RED: specify schema and aggregate invariants**
+- [X] **T008 — RED: specify schema and aggregate invariants**
   - Parallel lane: `[P]` persistence lane, paired only with T009 and eligible
     to run concurrently with the T006–T007 web contract lane after T005 review.
   - Create `services/backend/tests/integration/test_migrations.py` and
@@ -164,27 +167,39 @@ Owning epic: EPIC-001
     normalized criterion weights, event sequence, job leases, ordinary
     idempotency uniqueness, and the non-cascading ten-minute
     `ResetReplayReceipt` invariants in `data-model.md`, including exact response
-    bytes and context-bound authenticated encryption.
-  - Trace: `F-002`, `F-003`, `F-004`, `F-006`, `NFR-004`; `AS-003`, `AS-005`.
+    bytes, absence of raw caller fields, domain-separated idempotency-key
+    hashing, and context-bound authenticated encryption. Request-boundary
+    content-negative cases remain T010/T020 because T008 owns persistence only.
+    Assert that `DeletionCompletion` has no parent foreign key, contains only
+    non-sensitive audit fields, survives workspace/job cascade, and enforces one
+    completion per workspace operation and job.
+  - Trace: `F-002`, `F-003`, `F-004`, `F-006`, `NFR-002`, `NFR-004`,
+    `QUALITY-SEC-001`; `AS-003`, `AS-005`, `AS-007`.
   - Verify: the tests fail because migration `0001` and models are absent.
   - Depends on: T003, T005.
 
-- [ ] **T009 — GREEN: implement migration, models, and transaction boundary**
+- [X] **T009 — GREEN: implement migration, models, and transaction boundary**
   - Parallel lane: `[P]` persistence lane; depends on its own RED task T008.
   - Apply the task-owned `uuid6==2025.0.1` and
     `cryptography==49.0.0` lock updates through the isolated
     tooling-maintenance process immediately before implementation. Encrypt
     reset-receipt session material with AES-256-GCM, a fresh random 96-bit
     nonce per encryption, and the associated data defined in `data-model.md`.
+    Implementation discovery `IM-003` also changes the locked installation form
+    to `sqlalchemy[asyncio]==2.0.51` and locks its required
+    `greenlet==3.5.4`, without changing the accepted SQLAlchemy version.
   - Create `services/backend/migrations/versions/0001_walking_skeleton.py`,
     `persistence/models.py`, `persistence/session.py`, and
     `persistence/repositories.py`.
   - Implement state-transition guards, workspace-scoped repository methods,
     reset-receipt expiry/purge support, exact serialized response-byte storage,
     and authenticated encryption of replacement reset tokens with the specified
-    receipt-context associated data.
-  - Trace: `F-002`, `F-003`, `F-004`, `F-006`, `F-009`, `NFR-004`,
-    `NFR-009`, `QUALITY-OPS-001`; `AS-001`, `AS-003`, `AS-005`.
+    receipt-context associated data. Include the non-sensitive
+    `DeletionCompletion` schema required by `QUALITY-OPS-001`; deletion-worker
+    behavior remains T017–T018.
+  - Trace: `F-002`, `F-003`, `F-004`, `F-006`, `F-009`, `NFR-002`,
+    `NFR-004`, `NFR-009`, `QUALITY-OPS-001`, `QUALITY-SEC-001`; `AS-001`,
+    `AS-003`, `AS-005`, `AS-007`.
   - Update fresh Compose startup to apply `0001_walking_skeleton` before
     readiness. Update `tests/e2e/test_compose_readiness.py` so its permanent
     assertion compares exact database and repository Alembic head sets and
@@ -214,10 +229,12 @@ Owning epic: EPIC-001
     does not match the bound replacement token/session is never signed. Mutate
     or swap stored response bytes and assert response-hash verification fails
     closed. Assert receipt purge and that no receipt field contains workspace,
-    source, decision, run, event, UI, or other user-authored content.
+    raw idempotency key, source, decision, run, event, UI, or other raw
+    user-authored content.
   - Race reset requests: identical key/hash calls collapse to one commit and one
     replay, while a different-key loser cannot reset the already-revoked session.
-  - Trace: `F-001`, `F-002`, `NFR-002`, `NFR-008`; `AS-002`, `AS-007`.
+  - Trace: `F-001`, `F-002`, `NFR-002`, `NFR-004`, `NFR-008`,
+    `QUALITY-OPS-001`; `AS-002`, `AS-007`.
   - Verify: these tests fail because settings, session verification, context,
     and routes are absent.
   - Depends on: T009.
@@ -241,16 +258,17 @@ Owning epic: EPIC-001
     session lookup, local singleton context, pre-side-effect capability guard,
     and the reset transaction that creates the replacement session, revokes the
     old one, queues deletion, and writes its encrypted ten-minute replay receipt.
-  - Restrict revoked-cookie verification to the reset replay branch. Match its
-    fingerprint, operation, key, and request hash in constant time; reproduce the
+  - Restrict revoked-cookie verification to the reset replay branch. Hash the
+    raw idempotency key using the data-model domain before storage or lookup,
+    then match fingerprint, operation, key hash, and request hash; reproduce the
     original response bytes/content type and deterministic cookie serialization
     from fixed receipt fields.
   - Bind token ciphertext through AEAD associated data to every immutable
     security-relevant receipt field in `data-model.md`; after decrypting,
     constant-time verify the token hash against the receipt before signing.
     Purge expired receipts.
-  - Trace: `F-001`, `F-002`, `F-008`, `NFR-002`, `NFR-008`,
-    `QUALITY-SEC-001`; `AS-002`, `AS-006`, `AS-007`.
+  - Trace: `F-001`, `F-002`, `F-008`, `NFR-002`, `NFR-004`, `NFR-008`,
+    `QUALITY-SEC-001`, `QUALITY-OPS-001`; `AS-002`, `AS-006`, `AS-007`.
   - Verify: T010 and T011 tests pass.
   - Depends on: T010, T011.
 
@@ -323,7 +341,11 @@ Owning epic: EPIC-001
     `services/backend/tests/integration/test_job_leases.py`.
   - Cover reconnect from every sequence, terminal replay, API restart, worker
     restart, lease expiry, competing workers, contiguous sequence, heartbeat,
-    and exactly one terminal event.
+    exactly one terminal event, and a delete-workspace job that survives a
+    pre-commit worker failure. On success, assert one transaction inserts the
+    non-sensitive completion record and deletes the workspace, the
+    workspace-owned job cascades, retries do not duplicate the completion, and
+    the retained record cannot authorize or reconstruct the deleted workspace.
   - Trace: `F-004`, `F-005`, `F-006`, `NFR-004`, `QUALITY-OPS-001`; `AS-005`.
   - Verify: the tests fail because job leasing and stream replay are absent.
   - Depends on: T016.
@@ -332,7 +354,9 @@ Owning epic: EPIC-001
   - Create `runs/fake_graph.py`, `runs/jobs.py`, `runs/service.py`, `worker.py`,
     `api/routes/runs.py`, and the associated repository transactions.
   - Validate before event insertion, lease and resume jobs, persist each event,
-    expose snapshots, and stream SSE from the persisted watermark.
+    expose snapshots, and stream SSE from the persisted watermark. Execute
+    delete-workspace jobs with the atomic completion-record/deletion boundary
+    defined in `data-model.md`.
   - Trace: `F-004`, `F-005`, `F-006`, `F-007`, `FR-006`, `NFR-004`,
     `QUALITY-UI-001`, `QUALITY-SEC-001`, `QUALITY-OPS-001`; `AS-004`,
     `AS-005`.
@@ -522,7 +546,7 @@ Owning epic: EPIC-001
     restart-safe Playwright controls.
   - Trace: `FR-001`, `FR-003`, `FR-006`, `FR-011`, `QUALITY-OPS-001`;
     `AS-002` through `AS-007`.
-  - Verify: `pnpm --dir apps/web test:e2e -- walking-skeleton.spec.ts` passes.
+  - Verify: `corepack pnpm --dir apps/web test:e2e -- walking-skeleton.spec.ts` passes.
   - Depends on: T028.
 
 - [ ] **T030 — RED: specify accessibility**

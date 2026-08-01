@@ -1,6 +1,6 @@
 ---
 artifact: visual-design-contract
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---
@@ -221,4 +221,3 @@ Use concise, direct language:
 The canonical demo must be usable at 360-pixel, 768-pixel, 1280-pixel, and
 1440-pixel viewport widths, at 200% browser zoom, in keyboard-only navigation,
 with reduced motion, and with a screen reader on one desktop platform.
-

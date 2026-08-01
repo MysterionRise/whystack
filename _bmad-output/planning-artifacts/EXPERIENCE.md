@@ -1,6 +1,6 @@
 ---
 artifact: experience-contract
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---
@@ -301,4 +301,3 @@ without facilitator correction:
 Observed confusion is classified as copy, interaction, information-architecture,
 or product-model failure and routed to the appropriate baseline or feature
 change.
-

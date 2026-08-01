@@ -1,8 +1,34 @@
+<!--
+Sync Impact Report
+- Version change: 1.0.0 -> 2.0.0
+- Modified principles: Article VI replaces an absolute privacy/scope rule with
+  explicit workspace-owned scope plus the bounded non-workspace reset-replay
+  exception. The exception permits only hashed caller inputs and replay of an
+  already-committed replacement credential; it cannot recover the revoked
+  workspace or itself authorize scope. This is a backward-incompatible privacy
+  amendment and therefore a major version under this constitution's governance
+  rules.
+- Added sections: none.
+- Removed sections: none.
+- Templates: .specify/templates/plan-template.md, spec-template.md, and
+  tasks-template.md require no change; their generic constitution gates remain
+  aligned.
+- Command guidance: all installed Spec Kit command definitions were reviewed;
+  no update is required.
+- Runtime guidance: AGENTS.md and README.md remain aligned.
+- Baseline propagation: accepted CR-001 issued replacement baseline IB-002 and
+  archived immutable IB-001.
+- Active feature propagation: specs/001-walking-skeleton/plan.md, spec.md,
+  data-model.md, tasks.md, and .ai-sdlc/traceability.yaml updated.
+- Follow-up TODOs: none.
+-->
+
 # AI CTO Cockpit Constitution
 
-Version: 1.0.0  
-Ratified: 2026-07-27  
-Inception baseline: IB-001  
+Version: 2.0.0
+Ratified: 2026-07-27
+Last amended: 2026-08-01
+Inception baseline: IB-002
 Status: Binding
 
 ## Purpose and authority
@@ -90,10 +116,24 @@ are release requirements rather than optional polish.
 
 ## Article VI — Privacy and workspace scope are server-derived
 
-Every durable record, job, event, and vector payload carries `workspace_id`.
-Workspace scope is derived from trusted server context and is never accepted
-from model output. Retrieval, replay, export, deletion, and background jobs must
-enforce the same scope.
+Every workspace-owned durable record, job, event, and vector payload carries
+`workspace_id`. Workspace scope is derived from trusted server context and is
+never accepted from model output. Retrieval, replay, export, deletion, and
+background jobs must enforce the same scope.
+
+A feature may define a non-workspace operational receipt only when it must
+survive deletion of the workspace that triggered it. Such a receipt MUST have a
+short, explicit expiry; MUST contain no workspace ID, source data, decision or
+run data, UI payload, or raw user-authored content; and MUST be reachable only
+through a separately verified, one-way fingerprint. Its feature data model MAY
+allow fixed operational metadata, one-way hashes of caller inputs, exact
+server-authored response bytes, and authenticated encrypted material needed to
+reproduce an already-committed replacement credential. The receipt MUST NOT
+contain, restore, or derive the identity or context of the triggering or revoked
+workspace and MUST NOT itself authorize any workspace. Only ordinary signed or
+authenticated session verification on a subsequent request may derive the
+replacement workspace context. The feature data model and negative tests MUST
+document and enforce every part of this exception.
 
 The public demo permits only the bundled synthetic corpus and an expiring guest
 overlay. Uploads and live connectors are denied. Local-data mode permits

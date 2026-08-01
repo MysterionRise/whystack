@@ -1,6 +1,6 @@
 ---
 artifact: epics
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---

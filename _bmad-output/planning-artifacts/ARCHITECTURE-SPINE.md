@@ -1,6 +1,6 @@
 ---
 artifact: architecture-spine
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---
@@ -147,6 +147,17 @@ All workspace-owned tables include `workspace_id`. Database constraints enforce
 revision uniqueness, idempotency, valid state transitions, and referential
 integrity. Application queries always include workspace scope; randomized
 isolation tests exercise every access path.
+
+The guest-reset replay receipt is non-workspace operational state because it
+must survive deletion of the old guest overlay. It contains no `workspace_id`
+or raw user-authored content, expires ten minutes after reset, cannot restore or
+derive the triggering or revoked workspace identity or context, cannot itself
+authorize any workspace, and is addressable only by a separately verified
+one-way fingerprint of the old signed session. Its bounded hashes, fixed
+metadata, exact server-authored response bytes, and encrypted replacement
+credential may reproduce only the already-committed replacement response;
+ordinary session verification alone derives replacement workspace context.
+This is the only feature-001 exception to workspace-owned table scope.
 
 ### Raw blob storage
 

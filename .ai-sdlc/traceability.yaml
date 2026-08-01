@@ -1,6 +1,6 @@
 schema_version: "1.0"
 status: "feature-001-implementation-in-progress"
-inception_baseline: "IB-001"
+inception_baseline: "IB-002"
 authorities:
   product_requirements: "_bmad-output/planning-artifacts/prd.md"
   epics: "_bmad-output/planning-artifacts/epics.md"
@@ -112,6 +112,8 @@ functional_requirements:
       - "T005"
       - "T006"
       - "T007"
+      - "T008"
+      - "T009"
       - "T016"
       - "T017"
       - "T018"
@@ -219,6 +221,8 @@ nonfunctional_requirements:
       - "AS-006"
       - "AS-007"
     active_tasks:
+      - "T008"
+      - "T009"
       - "T010"
       - "T011"
       - "T012"
@@ -249,11 +253,14 @@ nonfunctional_requirements:
       - "AS-003"
       - "AS-004"
       - "AS-005"
+      - "AS-007"
     active_tasks:
       - "T002"
       - "T003"
       - "T008"
       - "T009"
+      - "T010"
+      - "T012"
       - "T013"
       - "T014"
       - "T015"
@@ -432,6 +439,8 @@ quality_requirements:
       - "T005"
       - "T006"
       - "T007"
+      - "T008"
+      - "T009"
       - "T011"
       - "T012"
       - "T016"
@@ -480,10 +489,13 @@ quality_requirements:
       - "AS-003"
       - "AS-004"
       - "AS-005"
+      - "AS-007"
     tasks:
       - "T002"
       - "T003"
       - "T009"
+      - "T010"
+      - "T012"
       - "T014"
       - "T016"
       - "T017"
@@ -495,6 +507,9 @@ quality_requirements:
       - "T032"
       - "T033"
     planned_evidence:
+      - "services/backend/tests/unit/test_persistence_models.py"
+      - "services/backend/tests/integration/test_migrations.py"
+      - "services/backend/tests/api/test_session_reset.py"
       - "services/backend/tests/property/test_revision_idempotency.py"
       - "services/backend/tests/integration/test_run_replay.py"
       - "services/backend/tests/integration/test_job_leases.py"
@@ -646,15 +661,19 @@ acceptance_scenarios:
       - "apps/web/tests/security-boundary.test.ts"
       - "apps/web/tests/decision-frame-form.test.tsx"
   AS-007:
-    title: "Workspace isolation and redacted observability"
+    title: "Workspace isolation, reset replay, and redacted observability"
     baseline_requirements:
       - "FR-001"
       - "FR-003"
       - "FR-011"
       - "NFR-002"
+      - "NFR-004"
       - "NFR-008"
       - "QUALITY-SEC-001"
+      - "QUALITY-OPS-001"
     tasks:
+      - "T008"
+      - "T009"
       - "T010"
       - "T012"
       - "T013"
@@ -665,6 +684,9 @@ acceptance_scenarios:
       - "T029"
       - "T034"
     tests:
+      - "services/backend/tests/unit/test_persistence_models.py"
+      - "services/backend/tests/integration/test_migrations.py"
+      - "services/backend/tests/api/test_session_reset.py"
       - "services/backend/tests/security/test_workspace_isolation.py"
       - "services/backend/tests/security/test_telemetry_redaction.py"
       - "services/backend/tests/security/test_telemetry_metrics.py"
@@ -723,19 +745,19 @@ task_index:
   T006:
     stage: "red"
     scenarios: ["AS-008"]
-    verification: "Closed parser and malicious-envelope fuzz tests fail."
+    verification: "Closed parser and malicious-envelope fuzz tests fail; retained observation: specs/001-walking-skeleton/evidence/t006-t009-execution.md."
   T007:
     stage: "green"
     scenarios: ["AS-008"]
     verification: "Closed parser, malicious-envelope fuzz, and generation checks pass with zero arbitrary execution."
   T008:
     stage: "red"
-    scenarios: ["AS-003", "AS-005"]
-    verification: "Migration and model invariant tests fail for absent schema."
+    scenarios: ["AS-003", "AS-005", "AS-007"]
+    verification: "services/backend/tests/unit/test_persistence_models.py and services/backend/tests/integration/test_migrations.py fail for absent schema; retained observation: specs/001-walking-skeleton/evidence/t006-t009-execution.md."
   T009:
     stage: "green"
-    scenarios: ["AS-001", "AS-003", "AS-005"]
-    verification: "Migration/model invariants and exact Compose migration-head equality pass at 0001_walking_skeleton."
+    scenarios: ["AS-001", "AS-003", "AS-005", "AS-007"]
+    verification: "services/backend/tests/unit/test_persistence_models.py, services/backend/tests/integration/test_migrations.py, and tests/e2e/test_compose_readiness.py pass with exact database/repository head equality at 0001_walking_skeleton."
   T010:
     stage: "red"
     scenarios: ["AS-002", "AS-007"]

@@ -1,6 +1,6 @@
 ---
 artifact: project-context
-baseline: IB-001
+baseline: IB-002
 status: accepted
 date: 2026-07-27
 ---
@@ -92,6 +92,14 @@ content, browse arbitrary private-network URLs, activate inferred preferences,
 or render arbitrary model-generated code. A user explicitly commits outcomes
 and memory changes.
 
+All workspace-owned durable state carries server-derived workspace scope. A
+raw-user-content-free operational receipt may survive guest-workspace deletion only for
+the bounded reset-replay window; it contains no raw caller content, cannot
+recover the triggering or revoked workspace, cannot itself authorize any
+workspace, and is reachable only from a separately verified one-way session
+fingerprint. It may reproduce only the already-committed replacement
+credential, whose ordinary verification derives replacement workspace context.
+
 ## Quality posture
 
 The release is blocked by provenance failures, fabricated locators, hard
@@ -106,4 +114,3 @@ BMAD artifacts define the accepted product baseline through readiness. Spec Kit
 features are the sole unit of delivery. Product-level discoveries return to a
 numbered baseline change; implementation discoveries flow back into the active
 feature.
-

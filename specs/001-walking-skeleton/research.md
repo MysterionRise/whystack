@@ -1,7 +1,7 @@
 # Research Decisions: Walking Skeleton
 
 Date: 2026-07-27  
-Baseline: IB-001  
+Baseline: IB-002
 Status: Resolved
 
 ## R-001 — Separate TypeScript web and Python backend

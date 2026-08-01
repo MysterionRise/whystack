@@ -1,12 +1,10 @@
 schema_version: 1
-baseline_id: IB-002
+baseline_id: IB-001
 project: ai-cto-cockpit
-created_on: "2026-08-01"
-supersedes: IB-001
-change_request: docs/changes/CR-001-bounded-reset-replay-receipt.md
+created_on: "2026-07-27"
 state: accepted-for-specification
 readiness_verdict: PASS
-application_status: feature-001-in-progress-through-t009
+application_status: feature-001-in-progress-through-t005
 
 intent:
   primary_user: technical-founder-or-hands-on-engineering-leader
@@ -87,52 +85,43 @@ change_control:
 artifacts:
   - path: .ai-sdlc/WORKFLOW.md
     owner: lifecycle-governance
-    sha256: a88c7430c1affc6624f768ff3d571f8e5cca7c0bd5fb15d3e5eba6b7181e07d7
+    sha256: 802f68488ea4227a87b509bf9a90c07c976657bba184e7aefd010f9dc88fda71
   - path: .ai-sdlc/toolchain.lock.yaml
     owner: lifecycle-governance
-    sha256: c44ae82ef68369cfa87cc0d8708ee5231069afa3cecacd1830d7c0bcc29927d1
+    sha256: 98162533dddfda2dc836e7dd34e3318335fcfb046d9617480ecfd2150f03deb4
   - path: .ai-sdlc/source-manifest.yaml
     owner: provenance-governance
-    sha256: 3d8645ce1d7cee7e40399c4a7c646c3409b28eadba51e893a661a8a05c6961ea
-  - path: .ai-sdlc/baselines/IB-001.yaml
-    owner: lifecycle-governance-archive
-    sha256: 2246de84131c55fcc0b16d16913c5c3d0d41233a5e31bd002680ef21d97e2580
-  - path: .specify/memory/constitution.md
-    owner: github-spec-kit-governance
-    sha256: 379f542f1a929430246c86e98c7be304f8f37969d18ad49a3e0be0b48dd96767
-  - path: docs/changes/CR-001-bounded-reset-replay-receipt.md
-    owner: lifecycle-governance-change-control
-    sha256: 69c2cba8690fab7edcb3bd9eb573f5097cf7a562ca4bfaeb081bfdd454d07fad
+    sha256: 1428d4b7ba25d0310002e2fc5ff69bb64743be284d05c98b634bb5b7d3287b8e
   - path: _bmad-output/project-context.md
     owner: bmad-method
-    sha256: 384b41a84878a84bfe2298bbbb6185f8ea227a33714056e0196f208f4ecd0c1c
+    sha256: 09dae20a6ac018e0cf0979bd8062737de375cc19a4b02f1e986f55814fd70c05
   - path: _bmad-output/planning-artifacts/product-brief.md
     owner: bmad-method
-    sha256: f2c80393afcc83f45fca449cbc71c7bfbe6df934cb6c68bc75e0f46981eb0b1b
+    sha256: 9b26767d97eaa43700878e5a5a8230b957d8724b405435b7440ad402fe45d6e2
   - path: _bmad-output/planning-artifacts/prd.md
     owner: bmad-method
-    sha256: a9d5fa2e49521957da1325aa81645d50ac41b8717a497eed681f0f3c9147406e
+    sha256: a4eec29a558cf2871a8c2a4f8905652cd7bb8200385c9b5eac8ef815dcbf9cc7
   - path: _bmad-output/planning-artifacts/DESIGN.md
     owner: bmad-method
-    sha256: a33bbbb5446cb49d69e329bfc4e051358f98f5cc4296bcca96613dbdb1357ccb
+    sha256: 4b816d7a559428ae15b7b4452fcaf530720f64654a400ecffb4566c1389daa65
   - path: _bmad-output/planning-artifacts/EXPERIENCE.md
     owner: bmad-method
-    sha256: 4a0c095a2adf465f3964118285b7c281cad27270401a9afd42177cbafbf85509
+    sha256: 0904f41224d620a385307d62f6062afa96ab62cddb998a624bdc3b43410f1321
   - path: _bmad-output/planning-artifacts/ARCHITECTURE-SPINE.md
     owner: bmad-method
-    sha256: cff115d33a6aa1b15720b30eb44eff0a97d77ee7dd60350ca45559418d7d0c54
+    sha256: acc0af6fe49ad12be2e861aea659bfc3e2c24da39d191ac1ca53453477308f35
   - path: _bmad-output/planning-artifacts/epics.md
     owner: bmad-method
-    sha256: 8e128c6c708291de8ec235155ffdb94a1606294f05af2df89287b02e089443f5
+    sha256: 68623308773f9540f27ea938d29b45baaded97eea2a4c267133356252ebb3fb7
   - path: _bmad-output/planning-artifacts/implementation-readiness.md
     owner: bmad-method
-    sha256: ce43fd35d2aaaf09d5f86e282e362fb71020b46b6e4147b7467cb802ec2ff6d3
+    sha256: fa625e342628613b417f9f24b8fd656aac2453da98040cebe29529fc965ae5a2
   - path: _bmad-output/test-artifacts/system-test-design.md
     owner: bmad-test-architect
-    sha256: 99f6a829a8001f11a7c728950b1afb673471090e06fbba350318bef8828eedba
+    sha256: 7a279dd19797a3429090fdb0cdf1ee4a596290bc33e882ff3931aa06822ec409
   - path: _bmad-output/test-artifacts/ai-quality-contract.md
     owner: bmad-test-architect-and-project
-    sha256: 9a33316e00ea16441ad5b65e639936752afa0c6b8da025fb12bebe8cca57127a
+    sha256: a0643f732fe9057bcfdb292b9a38a6a8fdcc570bf80e0e7ec0f0ddc7bdb9f67e
 
 handoff:
   first_epic: EPIC-001
