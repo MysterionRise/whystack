@@ -9,6 +9,8 @@
   "scripts": {
     "build": "next build",
     "check": "eslint . --max-warnings=0 && tsc --noEmit",
+    "contracts:check": "node scripts/generate-contracts.mjs --check",
+    "contracts:generate": "node scripts/generate-contracts.mjs --write",
     "dev": "next dev --hostname 0.0.0.0 --port 3000",
     "start": "next start --hostname 0.0.0.0 --port 3000",
     "test": "vitest run",

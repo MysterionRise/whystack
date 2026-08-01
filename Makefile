@@ -16,9 +16,11 @@ check:
 
 contracts-generate:
 	$(UV) run --project services/backend --locked python -m ai_cto_cockpit.contracts.generate --write
+	$(PNPM) --dir apps/web contracts:generate
 
 contracts-check:
 	$(UV) run --project services/backend --locked python -m ai_cto_cockpit.contracts.generate --check
+	$(PNPM) --dir apps/web contracts:check
 	$(UV) run --project services/backend --locked pytest services/backend/tests/contracts
 
 toolchain-check:
