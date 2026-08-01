@@ -301,6 +301,37 @@ def upgrade() -> None:
     op.create_index("ix_jobs_workspace_id", "jobs", ["workspace_id"])
 
     op.create_table(
+        "deletion_completions",
+        sa.Column("id", UUID, primary_key=True),
+        sa.Column("workspace_id", UUID, nullable=False),
+        sa.Column(
+            "operation",
+            sa.String(80),
+            nullable=False,
+            server_default="delete-guest-workspace-v1",
+        ),
+        sa.Column("job_id", UUID, nullable=False),
+        sa.Column(
+            "completed_at", TIMESTAMP, nullable=False, server_default=sa.func.now()
+        ),
+        sa.UniqueConstraint(
+            "workspace_id",
+            "operation",
+            name="uq_deletion_completions_workspace_operation",
+        ),
+        sa.UniqueConstraint("job_id", name="uq_deletion_completions_job_id"),
+        sa.CheckConstraint(
+            "operation = 'delete-guest-workspace-v1'",
+            name="ck_deletion_completions_operation",
+        ),
+    )
+    op.create_index(
+        "ix_deletion_completions_workspace_id",
+        "deletion_completions",
+        ["workspace_id"],
+    )
+
+    op.create_table(
         "idempotency_records",
         sa.Column("id", UUID, primary_key=True),
         sa.Column(
@@ -343,7 +374,7 @@ def upgrade() -> None:
             nullable=False,
             server_default="reset-guest-session-v1",
         ),
-        sa.Column("key", sa.String(128), nullable=False),
+        sa.Column("key_hash", sa.LargeBinary(), nullable=False),
         sa.Column("request_hash", sa.String(64), nullable=False),
         sa.Column("replacement_session_id", UUID, nullable=False),
         sa.Column("replacement_token_hash", sa.LargeBinary(), nullable=False),
@@ -386,8 +417,12 @@ def upgrade() -> None:
         sa.UniqueConstraint(
             "old_session_fingerprint",
             "operation",
-            "key",
-            name="uq_reset_replay_receipts_fingerprint_operation_key",
+            "key_hash",
+            name="uq_reset_replay_receipts_fingerprint_operation_key_hash",
+        ),
+        sa.CheckConstraint(
+            "octet_length(key_hash) = 32",
+            name="ck_reset_replay_receipts_key_hash_length",
         ),
         sa.CheckConstraint(
             "expires_at = created_at + INTERVAL '10 minutes'",
@@ -450,6 +485,7 @@ def downgrade() -> None:
     for table_name in (
         "reset_replay_receipts",
         "idempotency_records",
+        "deletion_completions",
         "jobs",
         "run_events",
         "runs",

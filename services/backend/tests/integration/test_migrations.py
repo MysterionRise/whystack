@@ -27,7 +27,11 @@ from ai_cto_cockpit.persistence.models import (
     Base,
     Decision,
     DecisionRevision,
+    DeletionCompletion,
     GuestSession,
+    Job,
+    JobKind,
+    JobStatus,
     ResetReplayReceipt,
     Run,
     RunEvent,
@@ -41,6 +45,7 @@ from ai_cto_cockpit.persistence.repositories import (
     DecisionRepository,
     ResetReplayRepository,
     RunRepository,
+    hash_reset_replay_idempotency_key,
     sha256_bytes,
 )
 from ai_cto_cockpit.persistence.session import (
@@ -64,6 +69,7 @@ EXPECTED_TABLES = {
     "runs",
     "run_events",
     "jobs",
+    "deletion_completions",
     "idempotency_records",
     "reset_replay_receipts",
 }
@@ -114,6 +120,7 @@ EXPECTED_FOREIGN_KEYS: dict[str, set[ForeignKeySignature]] = {
     "jobs": {
         (("workspace_id",), "workspaces", ("id",), "CASCADE"),
     },
+    "deletion_completions": set(),
     "idempotency_records": {
         (("workspace_id",), "workspaces", ("id",), "CASCADE"),
     },
@@ -129,9 +136,13 @@ EXPECTED_UNIQUES = {
     },
     "runs": {("workspace_id", "id")},
     "run_events": {("run_id", "sequence")},
+    "deletion_completions": {
+        ("workspace_id", "operation"),
+        ("job_id",),
+    },
     "idempotency_records": {("workspace_id", "operation", "key")},
     "reset_replay_receipts": {
-        ("old_session_fingerprint", "operation", "key"),
+        ("old_session_fingerprint", "operation", "key_hash"),
     },
 }
 
@@ -141,6 +152,7 @@ EXPECTED_INDEX_COLUMNS = {
     "runs": {("workspace_id",)},
     "run_events": {("workspace_id", "run_id", "sequence")},
     "jobs": {("workspace_id",)},
+    "deletion_completions": {("workspace_id",)},
     "idempotency_records": {("workspace_id",)},
 }
 
@@ -376,7 +388,7 @@ def _receipt(
     *,
     receipt_id: uuid.UUID,
     fingerprint: bytes,
-    key: str,
+    idempotency_key: str,
     response_body: bytes,
     created_at: datetime,
 ) -> ResetReplayReceipt:
@@ -384,7 +396,7 @@ def _receipt(
         id=receipt_id,
         old_session_fingerprint=fingerprint,
         operation="reset-guest-session-v1",
-        key=key,
+        key_hash=hash_reset_replay_idempotency_key(idempotency_key),
         request_hash="b2" * 32,
         replacement_session_id=_uuid7(900),
         replacement_token_hash=sha256_bytes(b"replacement-token"),
@@ -464,6 +476,13 @@ def test_migration_declares_complete_keys_indexes_and_delete_behavior(
         column["name"] for column in inspector.get_columns("reset_replay_receipts")
     }
     assert "workspace_id" not in receipt_columns
+    assert "key" not in receipt_columns
+    assert "key_hash" in receipt_columns
+    receipt_checks = {
+        check["name"]
+        for check in inspector.get_check_constraints("reset_replay_receipts")
+    }
+    assert "ck_reset_replay_receipts_key_hash_length" in receipt_checks
     assert inspector.get_foreign_keys("reset_replay_receipts") == []
 
 
@@ -475,6 +494,7 @@ def test_database_enforces_duplicate_immutability_weight_and_shape_invariants(
     revisions = Base.metadata.tables["decision_revisions"]
     runs = Base.metadata.tables["runs"]
     events = Base.metadata.tables["run_events"]
+    deletion_completions = Base.metadata.tables["deletion_completions"]
     idempotency = Base.metadata.tables["idempotency_records"]
     receipts = Base.metadata.tables["reset_replay_receipts"]
     jobs = Base.metadata.tables["jobs"]
@@ -518,7 +538,7 @@ def test_database_enforces_duplicate_immutability_weight_and_shape_invariants(
         "id": _uuid7(30),
         "old_session_fingerprint": b"old-fingerprint-0000000000000001",
         "operation": "reset-guest-session-v1",
-        "key": "retry-key-0001",
+        "key_hash": hash_reset_replay_idempotency_key("retry-key-0001"),
         "request_hash": "d4" * 32,
         "replacement_session_id": _uuid7(31),
         "replacement_token_hash": sha256_bytes(b"replacement-token"),
@@ -689,11 +709,61 @@ def test_database_enforces_duplicate_immutability_weight_and_shape_invariants(
             receipts.insert().values(
                 **{
                     **receipt_values,
+                    "id": _uuid7(34),
+                    "old_session_fingerprint": b"short-hash-fingerprint-0000000001",
+                    "key_hash": b"x" * 31,
+                }
+            ),
+        )
+        _expect_database_rejection(
+            connection,
+            receipts.insert().values(
+                **{
+                    **receipt_values,
                     "id": _uuid7(33),
                     "old_session_fingerprint": b"other-fingerprint-00000000000001",
-                    "key": "retry-key-0003",
+                    "key_hash": hash_reset_replay_idempotency_key("retry-key-0003"),
                     "expires_at": NOW + timedelta(minutes=9, seconds=59),
                 }
+            ),
+        )
+
+        completion_values = {
+            "id": _uuid7(35),
+            "workspace_id": workspace_id,
+            "operation": "delete-guest-workspace-v1",
+            "job_id": _uuid7(36),
+            "completed_at": NOW,
+        }
+        connection.execute(deletion_completions.insert().values(**completion_values))
+        _expect_database_rejection(
+            connection,
+            deletion_completions.insert().values(
+                **{
+                    **completion_values,
+                    "id": _uuid7(37),
+                    "job_id": _uuid7(38),
+                }
+            ),
+        )
+        _expect_database_rejection(
+            connection,
+            deletion_completions.insert().values(
+                **{
+                    **completion_values,
+                    "id": _uuid7(39),
+                    "workspace_id": _uuid7(40),
+                }
+            ),
+        )
+        _expect_database_rejection(
+            connection,
+            deletion_completions.insert().values(
+                id=_uuid7(41),
+                workspace_id=_uuid7(42),
+                operation="delete-unapproved-scope-v1",
+                job_id=_uuid7(43),
+                completed_at=NOW,
             ),
         )
 
@@ -902,6 +972,8 @@ async def test_reset_receipt_survives_session_deletion_and_purges_only_expired(
     seed_id = _uuid7(200)
     guest_id = _uuid7(201)
     session_id = _uuid7(202)
+    deletion_job_id = _uuid7(203)
+    completion_id = _uuid7(204)
     live_fingerprint = sha256_bytes(b"live-old-session")
     expired_fingerprint = sha256_bytes(b"expired-old-session")
     live_body = b'{"status":"reset-queued","note":"\xe2\x98\x83"}'
@@ -945,19 +1017,45 @@ async def test_reset_receipt_survives_session_deletion_and_purges_only_expired(
                     created_at=NOW,
                 )
             )
+            session.add(
+                Job(
+                    id=deletion_job_id,
+                    workspace_id=guest_id,
+                    kind=JobKind.DELETE_WORKSPACE,
+                    payload={"workspaceId": str(guest_id)},
+                    status=JobStatus.COMPLETED,
+                    available_at=NOW,
+                    lease_owner=None,
+                    lease_expires_at=None,
+                    attempt_count=1,
+                    last_error_code=None,
+                    created_at=NOW,
+                    updated_at=NOW,
+                    completed_at=NOW,
+                )
+            )
+            session.add(
+                DeletionCompletion(
+                    id=completion_id,
+                    workspace_id=guest_id,
+                    operation="delete-guest-workspace-v1",
+                    job_id=deletion_job_id,
+                    completed_at=NOW,
+                )
+            )
             session.add_all(
                 [
                     _receipt(
                         receipt_id=live_receipt_id,
                         fingerprint=live_fingerprint,
-                        key="retry-key-live",
+                        idempotency_key="retry-key-live",
                         response_body=live_body,
                         created_at=NOW,
                     ),
                     _receipt(
                         receipt_id=expired_receipt_id,
                         fingerprint=expired_fingerprint,
-                        key="retry-key-expired",
+                        idempotency_key="retry-key-expired",
                         response_body=expired_body,
                         created_at=NOW - timedelta(minutes=11),
                     ),
@@ -974,11 +1072,18 @@ async def test_reset_receipt_survives_session_deletion_and_purges_only_expired(
                 )
                 is None
             )
+            assert await session.get(Job, deletion_job_id) is None
+            completion = await session.get(DeletionCompletion, completion_id)
+            assert completion is not None
+            assert completion.workspace_id == guest_id
+            assert completion.job_id == deletion_job_id
+            assert completion.operation == "delete-guest-workspace-v1"
+            assert completion.completed_at == NOW
             repository = ResetReplayRepository(session)
             live_receipt = await repository.get(
                 old_session_fingerprint=live_fingerprint,
                 operation="reset-guest-session-v1",
-                key="retry-key-live",
+                key_hash=hash_reset_replay_idempotency_key("retry-key-live"),
                 now=NOW,
             )
             assert live_receipt is not None
@@ -992,7 +1097,7 @@ async def test_reset_receipt_survives_session_deletion_and_purges_only_expired(
                 await repository.get(
                     old_session_fingerprint=expired_fingerprint,
                     operation="reset-guest-session-v1",
-                    key="retry-key-expired",
+                    key_hash=hash_reset_replay_idempotency_key("retry-key-expired"),
                     now=NOW,
                 )
                 is None

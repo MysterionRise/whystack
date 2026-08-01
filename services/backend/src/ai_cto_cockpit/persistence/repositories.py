@@ -30,12 +30,17 @@ class ResetReplayIntegrityError(ValueError):
     """Authenticated reset-replay material failed a post-decryption check."""
 
 
+_RESET_REPLAY_IDEMPOTENCY_KEY_DOMAIN = (
+    b"ai-cto-cockpit/reset-replay/idempotency-key/v1\x00"
+)
+
+
 @dataclass(frozen=True, slots=True)
 class ResetReplayAad:
     id: uuid.UUID
     old_session_fingerprint: bytes
     operation: str
-    key: str
+    key_hash: bytes
     request_hash: str
     replacement_session_id: uuid.UUID
     replacement_token_hash: bytes
@@ -55,6 +60,14 @@ class ResetReplayAad:
 
 def sha256_bytes(value: bytes) -> bytes:
     return hashlib.sha256(value).digest()
+
+
+def hash_reset_replay_idempotency_key(key: str) -> bytes:
+    """Derive the bounded receipt lookup value without persisting caller text."""
+
+    if not 8 <= len(key) <= 128:
+        raise ValueError("Reset idempotency key must contain 8 to 128 characters")
+    return sha256_bytes(_RESET_REPLAY_IDEMPOTENCY_KEY_DOMAIN + key.encode("utf-8"))
 
 
 def _canonical_datetime(value: datetime) -> str:
@@ -297,14 +310,16 @@ class ResetReplayRepository:
         *,
         old_session_fingerprint: bytes,
         operation: str,
-        key: str,
+        key_hash: bytes,
         now: datetime,
     ) -> ResetReplayReceipt | None:
+        if len(key_hash) != 32:
+            raise ValueError("Reset idempotency key hash must contain 32 bytes")
         return await self._session.scalar(
             select(ResetReplayReceipt).where(
                 ResetReplayReceipt.old_session_fingerprint == old_session_fingerprint,
                 ResetReplayReceipt.operation == operation,
-                ResetReplayReceipt.key == key,
+                ResetReplayReceipt.key_hash == key_hash,
                 ResetReplayReceipt.expires_at > now,
             )
         )

@@ -14,6 +14,7 @@ from sqlalchemy.dialects import postgresql
 from ai_cto_cockpit.persistence.models import (
     Base,
     DecisionRevision,
+    DeletionCompletion,
     JobStatus,
     RunEventKind,
     RunStatus,
@@ -32,6 +33,7 @@ from ai_cto_cockpit.persistence.repositories import (
     canonical_reset_replay_aad,
     decrypt_replacement_token,
     encrypt_replacement_token,
+    hash_reset_replay_idempotency_key,
     sha256_bytes,
     validate_workspace_shape,
 )
@@ -117,6 +119,13 @@ EXPECTED_TABLE_COLUMNS = {
         "updated_at",
         "completed_at",
     },
+    "deletion_completions": {
+        "id",
+        "workspace_id",
+        "operation",
+        "job_id",
+        "completed_at",
+    },
     "idempotency_records": {
         "id",
         "workspace_id",
@@ -133,7 +142,7 @@ EXPECTED_TABLE_COLUMNS = {
         "id",
         "old_session_fingerprint",
         "operation",
-        "key",
+        "key_hash",
         "request_hash",
         "replacement_session_id",
         "replacement_token_hash",
@@ -158,7 +167,7 @@ EXPECTED_AAD_FIELDS = {
     "id",
     "old_session_fingerprint",
     "operation",
-    "key",
+    "key_hash",
     "request_hash",
     "replacement_session_id",
     "replacement_token_hash",
@@ -212,6 +221,7 @@ EXPECTED_FOREIGN_KEYS: dict[str, set[ForeignKeySignature]] = {
         ),
     },
     "jobs": {(("workspace_id",), "workspaces.id", "CASCADE")},
+    "deletion_completions": set(),
     "idempotency_records": {(("workspace_id",), "workspaces.id", "CASCADE")},
     "reset_replay_receipts": set(),
 }
@@ -225,9 +235,13 @@ EXPECTED_UNIQUE_COLUMNS = {
     },
     "runs": {("workspace_id", "id")},
     "run_events": {("run_id", "sequence")},
+    "deletion_completions": {
+        ("workspace_id", "operation"),
+        ("job_id",),
+    },
     "idempotency_records": {("workspace_id", "operation", "key")},
     "reset_replay_receipts": {
-        ("old_session_fingerprint", "operation", "key"),
+        ("old_session_fingerprint", "operation", "key_hash"),
     },
 }
 
@@ -268,7 +282,7 @@ def _aad() -> ResetReplayAad:
         id=uuid.UUID("01890f9a-7bcd-7abc-8def-0123456789ab"),
         old_session_fingerprint=bytes.fromhex("11" * 32),
         operation="reset-guest-session-v1",
-        key="retry-key-0001",
+        key_hash=bytes.fromhex("55" * 32),
         request_hash="22" * 32,
         replacement_session_id=uuid.UUID("01890f9a-7bcd-7abc-8def-0123456789ac"),
         replacement_token_hash=bytes.fromhex("33" * 32),
@@ -334,7 +348,64 @@ def test_uniqueness_and_scoped_indexes_encode_aggregate_invariants() -> None:
 def test_reset_receipt_is_non_cascading_and_has_no_workspace_scope() -> None:
     table = Base.metadata.tables["reset_replay_receipts"]
     assert "workspace_id" not in table.columns
+    assert "key" not in table.columns
+    assert "key_hash" in table.columns
+    assert "ck_reset_replay_receipts_key_hash_length" in _constraint_names(
+        "reset_replay_receipts"
+    )
     assert not table.foreign_key_constraints
+
+
+def test_deletion_completion_is_non_sensitive_and_survives_parent_deletion() -> None:
+    table = Base.metadata.tables["deletion_completions"]
+    column_names = {str(column.name) for column in table.columns}
+
+    assert not table.foreign_key_constraints
+    assert column_names == EXPECTED_TABLE_COLUMNS["deletion_completions"]
+    assert (
+        not {
+            "payload",
+            "request_body",
+            "response_body",
+            "source_data",
+            "decision_data",
+        }
+        & column_names
+    )
+    assert DeletionCompletion.operation.default.arg == "delete-guest-workspace-v1"
+
+
+def test_reset_replay_idempotency_key_is_domain_separated_before_storage() -> None:
+    raw_key = "caller-authored-retry-key"
+    digest = hash_reset_replay_idempotency_key(raw_key)
+
+    assert len(digest) == 32
+    assert digest.hex() == (
+        "671a13e75f4ec916a1f5ddfb85040685b4157d1777a995c20c342639987efaed"
+    )
+    assert raw_key.encode() not in digest
+    assert digest != sha256_bytes(raw_key.encode())
+    assert digest == hash_reset_replay_idempotency_key(raw_key)
+    assert digest != hash_reset_replay_idempotency_key(f"{raw_key}-other")
+
+
+@pytest.mark.parametrize(
+    ("raw_key", "valid"),
+    [
+        ("a" * 7, False),
+        ("a" * 8, True),
+        ("a" * 128, True),
+        ("a" * 129, False),
+    ],
+)
+def test_reset_replay_idempotency_key_length_is_bounded(
+    raw_key: str, valid: bool
+) -> None:
+    if valid:
+        assert len(hash_reset_replay_idempotency_key(raw_key)) == 32
+    else:
+        with pytest.raises(ValueError):
+            hash_reset_replay_idempotency_key(raw_key)
 
 
 def test_server_ids_are_canonical_uuid7() -> None:
@@ -459,6 +530,7 @@ def test_canonical_aad_has_every_exact_bound_field() -> None:
     assert {field.name for field in fields(ResetReplayAad)} == EXPECTED_AAD_FIELDS
     assert set(decoded) == EXPECTED_AAD_FIELDS
     assert decoded["old_session_fingerprint"] == "11" * 32
+    assert decoded["key_hash"] == "55" * 32
     assert decoded["replacement_token_hash"] == "33" * 32
     assert decoded["cookie_issued_at"] == "2026-08-01T12:30:00.123456Z"
     assert decoded["expires_at"] == "2026-08-01T12:40:00.123456Z"

@@ -371,6 +371,36 @@ class Job(Base):
     completed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
 
 
+class DeletionCompletion(Base):
+    __tablename__ = "deletion_completions"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "workspace_id",
+            "operation",
+            name="uq_deletion_completions_workspace_operation",
+        ),
+        sa.UniqueConstraint("job_id", name="uq_deletion_completions_job_id"),
+        sa.CheckConstraint(
+            "operation = 'delete-guest-workspace-v1'",
+            name="ck_deletion_completions_operation",
+        ),
+        sa.Index("ix_deletion_completions_workspace_id", "workspace_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=new_uuid7)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    operation: Mapped[str] = mapped_column(
+        sa.String(80),
+        nullable=False,
+        default="delete-guest-workspace-v1",
+        server_default="delete-guest-workspace-v1",
+    )
+    job_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    completed_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP, nullable=False, server_default=sa.func.now()
+    )
+
+
 class IdempotencyRecord(Base):
     __tablename__ = "idempotency_records"
     __table_args__ = (
@@ -410,8 +440,12 @@ class ResetReplayReceipt(Base):
         sa.UniqueConstraint(
             "old_session_fingerprint",
             "operation",
-            "key",
-            name="uq_reset_replay_receipts_fingerprint_operation_key",
+            "key_hash",
+            name="uq_reset_replay_receipts_fingerprint_operation_key_hash",
+        ),
+        sa.CheckConstraint(
+            "octet_length(key_hash) = 32",
+            name="ck_reset_replay_receipts_key_hash_length",
         ),
         sa.CheckConstraint(
             "expires_at = created_at + INTERVAL '10 minutes'",
@@ -452,7 +486,7 @@ class ResetReplayReceipt(Base):
         default="reset-guest-session-v1",
         server_default="reset-guest-session-v1",
     )
-    key: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    key_hash: Mapped[bytes] = mapped_column(sa.LargeBinary, nullable=False)
     request_hash: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     replacement_session_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
     replacement_token_hash: Mapped[bytes] = mapped_column(
