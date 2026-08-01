@@ -34,12 +34,11 @@ services:
       context: ..
       dockerfile: services/backend/Dockerfile
     command:
-      - uvicorn
-      - ai_cto_cockpit.main:app
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
+      - /bin/sh
+      - -ec
+      - |
+        alembic upgrade head
+        exec uvicorn ai_cto_cockpit.main:app --host 0.0.0.0 --port 8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -84,6 +83,8 @@ services:
       - -m
       - ai_cto_cockpit.worker
     depends_on:
+      api:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       qdrant:

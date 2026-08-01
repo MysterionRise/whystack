@@ -219,7 +219,7 @@ def test_compose_topology_is_ready(tmp_path: Path) -> None:
             ).stdout
         )
         assert api_result == {
-            "database_heads": [],
+            "database_heads": ["0001_walking_skeleton"],
             "live": {"body": {"status": "live"}, "status": 200},
             "postgres_value": 1,
             "provider_key_configured": False,
@@ -235,7 +235,7 @@ def test_compose_topology_is_ready(tmp_path: Path) -> None:
                 },
                 "status": 200,
             },
-            "repository_heads": [],
+            "repository_heads": ["0001_walking_skeleton"],
         }
 
         worker_result = _parse_last_json_line(
