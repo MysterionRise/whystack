@@ -760,16 +760,22 @@ task_index:
     verification: "services/backend/tests/unit/test_persistence_models.py, services/backend/tests/integration/test_migrations.py, and tests/e2e/test_compose_readiness.py pass with exact database/repository head equality at 0001_walking_skeleton."
   T010:
     stage: "red"
+    status: "completed"
     scenarios: ["AS-002", "AS-007"]
-    verification: "Configuration, guest-session, and reset tests fail."
+    evidence: "specs/001-walking-skeleton/evidence/t010-t012-execution.md"
+    verification: "Configuration, guest-session, and reset tests failed during collection because the application factory, security package, and trusted API context were absent."
   T011:
     stage: "red"
+    status: "completed"
     scenarios: ["AS-006"]
-    verification: "Capability side-effect tests fail."
+    evidence: "specs/001-walking-skeleton/evidence/t010-t012-execution.md"
+    verification: "All 16 direct-ASGI capability cases failed before settings and reserved routes existed; their preserved receive and side-effect tripwires define the boundary."
   T012:
     stage: "green"
+    status: "completed"
     scenarios: ["AS-002", "AS-006", "AS-007"]
-    verification: "Trusted-context and capability tests pass."
+    evidence: "specs/001-walking-skeleton/evidence/t010-t012-execution.md"
+    verification: "The 54-test T010-T011 suite, 133-test backend suite, quality, contract drift, exact migration-head Compose readiness, and bootstrap gates pass."
   T013:
     stage: "red"
     scenarios: ["AS-003", "AS-007"]

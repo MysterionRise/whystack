@@ -44,8 +44,8 @@ The complete ownership and change-control rules live in
 
 ## Current walking skeleton
 
-Feature `001-walking-skeleton` currently provides a contract-and-persistence
-walking skeleton on the five-process Compose topology:
+Feature `001-walking-skeleton` currently provides a trusted-session,
+contract, and persistence walking skeleton on the five-process Compose topology:
 
 - a Next.js web process with a health endpoint;
 - a FastAPI process with separate liveness and dependency-readiness endpoints;
@@ -62,7 +62,14 @@ walking skeleton on the five-process Compose topology:
   reset-replay records;
 - workspace-scoped persistence primitives and caller-owned transaction
   boundaries, with exact reset-response bytes and AES-256-GCM-protected
-  replacement-token material for the later reset route;
+  replacement-token material;
+- startup-frozen deployment configuration, stable server-owned seed/local
+  workspace shells, and opaque signed guest sessions that never expose or
+  accept workspace scope;
+- atomic guest reset with revocation, deletion-job creation, and ten-minute
+  byte-exact replay across process restart and retained-key rotation;
+- pre-body 403/501 capability boundaries for uploads and the reserved
+  `local-git`, `github`, and `web` connector routes;
 - isolated Compose networks and persistent service volumes.
 
 No retrieval, provider calls, recommendation intelligence, long-term memory,
@@ -84,8 +91,12 @@ The current Spec Kit status is:
   and exact migration-head readiness at `0001_walking_skeleton`.
 - The structured T006–T009 execution record is
   [`specs/001-walking-skeleton/evidence/t006-t009-execution.md`](specs/001-walking-skeleton/evidence/t006-t009-execution.md).
-- T010 is the next unstarted task. Trusted session/context behavior and every
-  application route beyond the existing health surface remain unimplemented.
+- T010–T012 are complete: retained configuration/session and capability-boundary
+  RED evidence, server-derived context, signed guest sessions, atomic exact
+  reset replay, and closed reserved routes.
+- The structured T010–T012 execution record is
+  [`specs/001-walking-skeleton/evidence/t010-t012-execution.md`](specs/001-walking-skeleton/evidence/t010-t012-execution.md).
+- T013 is the next unstarted task; decision API behavior remains unimplemented.
 
 ## Developer workflow
 
@@ -129,13 +140,19 @@ TypeScript checks. The Compose test creates a unique project, builds and waits
 for every process, verifies PostgreSQL/Alembic and Qdrant readiness, and removes
 only that project's containers and volumes.
 
-The task-owned contract and persistence suites can also be run directly:
+The task-owned contract, persistence, and trusted-session suites can also be
+run directly:
 
 ```bash
 corepack pnpm --dir apps/web test -- ui-envelope-contract.test.ts
 uv run --project services/backend --locked pytest \
   services/backend/tests/integration/test_migrations.py \
   services/backend/tests/unit/test_persistence_models.py
+uv run --project services/backend --locked pytest \
+  services/backend/tests/api/test_config.py \
+  services/backend/tests/security/test_guest_session.py \
+  services/backend/tests/api/test_session_reset.py \
+  services/backend/tests/security/test_demo_capabilities.py
 ```
 
 ## Start here

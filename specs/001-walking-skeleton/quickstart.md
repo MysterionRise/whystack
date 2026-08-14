@@ -49,7 +49,7 @@ make node-toolchain-check
 make install
 make check
 make contracts-check
-uv run --project services/backend --locked pytest
+uv run --project services/backend --locked pytest services/backend/tests
 uv run --project services/backend --locked pytest tests/e2e/test_compose_readiness.py
 corepack pnpm --dir apps/web check
 corepack pnpm --dir apps/web test

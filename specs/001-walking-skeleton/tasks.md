@@ -210,7 +210,7 @@ Owning epic: EPIC-001
     to repository heads at `0001_walking_skeleton`.
   - Depends on: T008.
 
-- [ ] **T010 — RED: specify server-derived configuration and sessions**
+- [X] **T010 — RED: specify server-derived configuration and sessions**
   - Create `services/backend/tests/api/test_config.py`,
     `services/backend/tests/security/test_guest_session.py`, and
     `services/backend/tests/api/test_session_reset.py`.
@@ -239,7 +239,7 @@ Owning epic: EPIC-001
     and routes are absent.
   - Depends on: T009.
 
-- [ ] **T011 — RED: specify capability denial before side effects**
+- [X] **T011 — RED: specify capability denial before side effects**
   - Create `services/backend/tests/security/test_demo_capabilities.py`.
   - Instrument repositories, filesystem, network client, Qdrant client, and job
     dispatch; assert every public-demo upload and connector request returns
@@ -250,7 +250,7 @@ Owning epic: EPIC-001
     absent.
   - Depends on: T009.
 
-- [ ] **T012 — GREEN: implement trusted context, configuration, reset, and denial**
+- [X] **T012 — GREEN: implement trusted context, configuration, reset, and denial**
   - Create `settings.py`, `security/guest_session.py`,
     `api/dependencies/context.py`, `api/routes/config.py`, and reserved source
     and connector routes.
