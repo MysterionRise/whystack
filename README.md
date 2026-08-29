@@ -103,7 +103,15 @@ The current Spec Kit status is:
   deliberately unimplemented.
 - The structured T013 execution record is
   [`specs/001-walking-skeleton/evidence/t013-execution.md`](specs/001-walking-skeleton/evidence/t013-execution.md).
-- T014 is the next unstarted task.
+- T014 is complete in RED: bounded Hypothesis properties specify sequential
+  and concurrent revision/idempotency behavior, exact integer weight
+  normalization across permutations and decimal contexts, lossless
+  browser-sensitive decimal strings, and ascending-ID remainder ties. The six
+  collected cases fail only because decision API behavior remains deliberately
+  unimplemented.
+- The structured T014 execution record is
+  [`specs/001-walking-skeleton/evidence/t014-execution.md`](specs/001-walking-skeleton/evidence/t014-execution.md).
+- T015 is the next unstarted task.
 
 ## Developer workflow
 

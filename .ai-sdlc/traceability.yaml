@@ -785,8 +785,10 @@ task_index:
     verification: "All 63 decision API acceptance cases reach the migrated disposable PostgreSQL fixture and fail with HTTP 404 because the decision routes and services are absent."
   T014:
     stage: "red"
+    status: "completed"
     scenarios: ["AS-003"]
-    verification: "Revision and idempotency property tests fail."
+    evidence: "specs/001-walking-skeleton/evidence/t014-execution.md"
+    verification: "All 6 bounded Hypothesis cases reach migrated disposable PostgreSQL and fail at the absent decision create route with HTTP 404; shared-fixture regressions and non-RED gates pass."
   T015:
     stage: "green"
     scenarios: ["AS-003", "AS-007"]

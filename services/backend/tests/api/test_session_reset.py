@@ -7,7 +7,6 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 
 import pytest
-from conftest import AsgiResponse, asgi_request
 from fastapi import FastAPI
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -33,6 +32,8 @@ from ai_cto_cockpit.persistence.models import (
 )
 from ai_cto_cockpit.security.guest_session import GuestSessionCodec, SessionKeyRing
 from ai_cto_cockpit.settings import Settings
+
+from ..support.asgi import AsgiResponse, asgi_request
 
 NOW = datetime(2026, 8, 14, 12, 0, 0, 123456, tzinfo=UTC)
 SIGNING_KEY = "t010-reset-signing-key-with-more-than-thirty-two-bytes"

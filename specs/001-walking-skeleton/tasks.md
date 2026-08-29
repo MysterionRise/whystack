@@ -296,7 +296,7 @@ Owning epic: EPIC-001
   - Verify: the test fails because decision services and routes are absent.
   - Depends on: T012.
 
-- [ ] **T014 — RED: specify revision and idempotency properties**
+- [X] **T014 — RED: specify revision and idempotency properties**
   - Apply the task-owned `hypothesis==6.160.0` lock update through the isolated
     tooling-maintenance process immediately before writing the property tests.
   - Create

@@ -6,7 +6,6 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 
 import pytest
-from conftest import AsgiResponse, asgi_request
 from pydantic import ValidationError
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,6 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from ai_cto_cockpit.main import create_app
 from ai_cto_cockpit.persistence.models import GuestSession, Workspace, WorkspaceKind
 from ai_cto_cockpit.settings import AppMode, Settings
+
+from ..support.asgi import AsgiResponse, asgi_request
 
 NOW = datetime(2026, 8, 14, 12, 0, 0, 123456, tzinfo=UTC)
 SIGNING_KEY = "t010-session-signing-key-with-more-than-thirty-two-bytes"
