@@ -791,8 +791,10 @@ task_index:
     verification: "All 6 bounded Hypothesis cases reach migrated disposable PostgreSQL and fail at the absent decision create route with HTTP 404; shared-fixture regressions and non-RED gates pass."
   T015:
     stage: "green"
+    status: "completed"
     scenarios: ["AS-003", "AS-007"]
-    verification: "Decision API and property tests pass."
+    evidence: "specs/001-walking-skeleton/evidence/t015-execution.md"
+    verification: "All 63 decision API cases, all 6 bounded revision/idempotency properties, and the 202-test backend suite pass with exact replay, immutable contiguous revisions, and integer-only normalization."
   T016:
     stage: "red"
     scenarios: ["AS-004", "AS-005"]

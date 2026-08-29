@@ -13,3 +13,11 @@ type IdempotencyKey = Annotated[
         pattern=r"^[\x21-\x7E]+$",
     ),
 ]
+
+type ExpectedRevision = Annotated[
+    int,
+    Header(
+        alias="If-Match",
+        ge=1,
+    ),
+]

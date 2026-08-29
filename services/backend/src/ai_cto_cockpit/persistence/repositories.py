@@ -9,12 +9,13 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from sqlalchemy import Select, and_, delete, or_, select
+from sqlalchemy import Select, and_, delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import (
     Decision,
     DecisionRevision,
+    IdempotencyRecord,
     Job,
     JobStatus,
     ResetReplayReceipt,
@@ -22,7 +23,9 @@ from .models import (
     RunEvent,
     RunEventKind,
     RunStatus,
+    Workspace,
     WorkspaceKind,
+    WorkspaceStatus,
 )
 
 
@@ -207,6 +210,65 @@ class DecisionRepository:
             statement = statement.with_for_update()
         return await self._session.scalar(statement)
 
+    async def get_current(
+        self,
+        *,
+        workspace_id: uuid.UUID,
+        decision_id: uuid.UUID,
+    ) -> tuple[Decision, DecisionRevision] | None:
+        decision = await self.get(
+            workspace_id=workspace_id,
+            decision_id=decision_id,
+        )
+        if decision is None:
+            return None
+        revision = await self._session.scalar(
+            select(DecisionRevision).where(
+                DecisionRevision.workspace_id == workspace_id,
+                DecisionRevision.decision_id == decision_id,
+                DecisionRevision.revision == decision.current_revision,
+            )
+        )
+        if revision is None:
+            raise RuntimeError("Decision current revision is unavailable")
+        return decision, revision
+
+    async def add_initial(
+        self,
+        *,
+        decision: Decision,
+        revision: DecisionRevision,
+    ) -> None:
+        if decision.current_revision != 1 or revision.revision != 1:
+            raise ValueError("A new decision must start at revision 1")
+        if (
+            revision.workspace_id != decision.workspace_id
+            or revision.decision_id != decision.id
+        ):
+            raise ValueError("Revision scope must match its parent decision")
+        self._session.add_all((decision, revision))
+        await self._session.flush()
+
+    async def append_locked(
+        self,
+        *,
+        decision: Decision,
+        revision: DecisionRevision,
+        updated_at: datetime,
+    ) -> None:
+        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+            raise ValueError("Decision timestamp must be timezone-aware")
+        if (
+            revision.workspace_id != decision.workspace_id
+            or revision.decision_id != decision.id
+            or revision.revision != decision.current_revision + 1
+        ):
+            raise ValueError("Revision must be the next scoped decision revision")
+        decision.current_revision = revision.revision
+        decision.updated_at = updated_at
+        self._session.add(revision)
+        await self._session.flush()
+
     async def append_revision(
         self,
         *,
@@ -226,6 +288,61 @@ class DecisionRepository:
         self._session.add(revision)
         await self._session.flush()
         return revision
+
+
+class WorkspaceRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def lock_active(
+        self,
+        *,
+        workspace_id: uuid.UUID,
+        kind: WorkspaceKind,
+        now: datetime,
+    ) -> Workspace | None:
+        conditions = [
+            Workspace.id == workspace_id,
+            Workspace.kind == kind,
+            Workspace.status == WorkspaceStatus.ACTIVE,
+        ]
+        if kind is WorkspaceKind.GUEST:
+            conditions.append(Workspace.expires_at > now)
+        return await self._session.scalar(
+            select(Workspace).where(*conditions).with_for_update(read=True)
+        )
+
+
+class IdempotencyRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def acquire_transaction_lock(self, *, lock_id: int) -> None:
+        await self._session.execute(
+            text("SELECT pg_advisory_xact_lock(:lock_id)"),
+            {"lock_id": lock_id},
+        )
+
+    async def get(
+        self,
+        *,
+        workspace_id: uuid.UUID,
+        operation: str,
+        key: str,
+        now: datetime,
+    ) -> IdempotencyRecord | None:
+        return await self._session.scalar(
+            select(IdempotencyRecord).where(
+                IdempotencyRecord.workspace_id == workspace_id,
+                IdempotencyRecord.operation == operation,
+                IdempotencyRecord.key == key,
+                IdempotencyRecord.expires_at > now,
+            )
+        )
+
+    async def add(self, record: IdempotencyRecord) -> None:
+        self._session.add(record)
+        await self._session.flush()
 
 
 class RunRepository:

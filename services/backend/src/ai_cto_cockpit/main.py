@@ -31,6 +31,7 @@ from ai_cto_cockpit.api.routes.config import (
 from ai_cto_cockpit.api.routes.config import (
     router as config_router,
 )
+from ai_cto_cockpit.api.routes.decisions import router as decisions_router
 from ai_cto_cockpit.persistence.session import (
     create_database_engine,
     create_session_factory,
@@ -227,6 +228,7 @@ def create_app(
         )
 
     application.include_router(config_router)
+    application.include_router(decisions_router)
     application.include_router(create_reserved_capability_router(route_mode))
     application.add_api_route("/api/v1/health/live", liveness, methods=["GET"])
     application.add_api_route("/api/v1/health/ready", readiness, methods=["GET"])

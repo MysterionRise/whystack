@@ -99,19 +99,22 @@ The current Spec Kit status is:
 - T013 is complete in RED: 63 decision API acceptance cases specify scoped
   create/get/revise behavior, immutable persisted revisions, closed validation,
   exact decimal-string normalization, idempotency, stale-write recovery, and
-  uniform cross-workspace 404 responses. Decision API behavior remains
-  deliberately unimplemented.
+  uniform cross-workspace 404 responses.
 - The structured T013 execution record is
   [`specs/001-walking-skeleton/evidence/t013-execution.md`](specs/001-walking-skeleton/evidence/t013-execution.md).
 - T014 is complete in RED: bounded Hypothesis properties specify sequential
   and concurrent revision/idempotency behavior, exact integer weight
   normalization across permutations and decimal contexts, lossless
-  browser-sensitive decimal strings, and ascending-ID remainder ties. The six
-  collected cases fail only because decision API behavior remains deliberately
-  unimplemented.
+  browser-sensitive decimal strings, and ascending-ID remainder ties.
 - The structured T014 execution record is
   [`specs/001-walking-skeleton/evidence/t014-execution.md`](specs/001-walking-skeleton/evidence/t014-execution.md).
-- T015 is the next unstarted task.
+- T015 is complete in GREEN: the scoped decision API now persists immutable,
+  contiguous PostgreSQL revisions; normalizes lossless decimal strings with an
+  integer-only largest-remainder algorithm; and atomically records canonical
+  idempotent responses behind transaction and aggregate locks. The structured
+  execution record is
+  [`specs/001-walking-skeleton/evidence/t015-execution.md`](specs/001-walking-skeleton/evidence/t015-execution.md).
+- T016 is the next unstarted task.
 
 ## Developer workflow
 

@@ -313,7 +313,7 @@ Owning epic: EPIC-001
   - Verify: the property test fails against the missing implementation.
   - Depends on: T013.
 
-- [ ] **T015 — GREEN: implement decision revisions and idempotency**
+- [X] **T015 — GREEN: implement decision revisions and idempotency**
   - Create `domain/ids.py`, `domain/idempotency.py`, `domain/revisions.py`,
     `api/routes/decisions.py`, and the required repository methods.
   - Validate the bounded decimal-string grammar and limits before expansion,

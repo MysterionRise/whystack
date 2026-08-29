@@ -5,15 +5,10 @@ import uuid
 from datetime import datetime
 
 import sqlalchemy as sa
-import uuid6
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-
-def new_uuid7() -> uuid.UUID:
-    """Return a server-generated, time-ordered UUIDv7."""
-
-    return uuid6.uuid7()
+from ai_cto_cockpit.domain.ids import new_uuid7
 
 
 class WorkspaceKind(enum.StrEnum):
