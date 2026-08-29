@@ -96,7 +96,14 @@ The current Spec Kit status is:
   reset replay, and closed reserved routes.
 - The structured T010–T012 execution record is
   [`specs/001-walking-skeleton/evidence/t010-t012-execution.md`](specs/001-walking-skeleton/evidence/t010-t012-execution.md).
-- T013 is the next unstarted task; decision API behavior remains unimplemented.
+- T013 is complete in RED: 63 decision API acceptance cases specify scoped
+  create/get/revise behavior, immutable persisted revisions, closed validation,
+  exact decimal-string normalization, idempotency, stale-write recovery, and
+  uniform cross-workspace 404 responses. Decision API behavior remains
+  deliberately unimplemented.
+- The structured T013 execution record is
+  [`specs/001-walking-skeleton/evidence/t013-execution.md`](specs/001-walking-skeleton/evidence/t013-execution.md).
+- T014 is the next unstarted task.
 
 ## Developer workflow
 

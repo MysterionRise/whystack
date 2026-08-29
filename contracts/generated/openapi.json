@@ -537,6 +537,7 @@
           "question": {
             "maxLength": 500,
             "minLength": 1,
+            "pattern": "^[\\s\\S]*\\S[\\s\\S]*$",
             "type": "string"
           },
           "schemaVersion": {
@@ -586,6 +587,7 @@
           "question": {
             "maxLength": 500,
             "minLength": 1,
+            "pattern": "^[\\s\\S]*\\S[\\s\\S]*$",
             "type": "string"
           },
           "schemaVersion": {

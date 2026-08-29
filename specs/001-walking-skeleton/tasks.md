@@ -274,11 +274,14 @@ Owning epic: EPIC-001
 
 ## Phase D — Versioned decisions
 
-- [ ] **T013 — RED: specify decision API behavior**
+- [X] **T013 — RED: specify decision API behavior**
   - Create `services/backend/tests/api/test_decisions.py`.
   - Cover create/get/revise, validation limits, unique slugs, all typed
-    constraint variants, immutable revision retrieval, stale `If-Match`, missing
-    idempotency key, same-request replay, conflicting key reuse, and uniform 404.
+    constraint variants, immutable revision persistence inspected directly in
+    PostgreSQL, stale `If-Match`, missing idempotency key, same-request replay,
+    conflicting key reuse, and uniform 404. The public GET remains the
+    contracted current-revision projection; do not add a historical-revision
+    endpoint.
   - Accept bounded lossless decimal-string entered weights that do not total
     100. Assert the response and stored revision preserve every exact string,
     including trailing zeros, and expose four-place normalized strings totaling

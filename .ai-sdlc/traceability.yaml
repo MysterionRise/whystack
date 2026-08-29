@@ -509,6 +509,7 @@ quality_requirements:
     planned_evidence:
       - "services/backend/tests/unit/test_persistence_models.py"
       - "services/backend/tests/integration/test_migrations.py"
+      - "services/backend/tests/api/test_decisions.py"
       - "services/backend/tests/api/test_session_reset.py"
       - "services/backend/tests/property/test_revision_idempotency.py"
       - "services/backend/tests/integration/test_run_replay.py"
@@ -778,8 +779,10 @@ task_index:
     verification: "The 54-test T010-T011 suite, 133-test backend suite, quality, contract drift, exact migration-head Compose readiness, and bootstrap gates pass."
   T013:
     stage: "red"
+    status: "completed"
     scenarios: ["AS-003", "AS-007"]
-    verification: "Decision API tests fail."
+    evidence: "specs/001-walking-skeleton/evidence/t013-execution.md"
+    verification: "All 63 decision API acceptance cases reach the migrated disposable PostgreSQL fixture and fail with HTTP 404 because the decision routes and services are absent."
   T014:
     stage: "red"
     scenarios: ["AS-003"]

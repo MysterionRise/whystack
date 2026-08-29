@@ -17,6 +17,8 @@ from ._base import (
 type ConstraintSeverity = Literal["hard", "advisory"]
 type DeploymentTarget = Literal["managed", "self-hosted", "on-device"]
 
+DECISION_QUESTION_PATTERN = r"^[\s\S]*\S[\s\S]*$"
+
 
 def _require_unique_strings(values: list[str]) -> list[str]:
     if len(values) != len(set(values)):
@@ -140,7 +142,14 @@ type Constraint = Annotated[
 
 class DecisionFrameInput(ContractModel):
     schema_version: Literal["1.0"]
-    question: Annotated[str, Field(min_length=1, max_length=500)]
+    question: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=500,
+            pattern=DECISION_QUESTION_PATTERN,
+        ),
+    ]
     context: Annotated[str, Field(max_length=10000)]
     options: Annotated[list[DecisionOption], Field(min_length=2, max_length=8)]
     criteria: Annotated[list[CriterionInput], Field(min_length=1, max_length=10)]
@@ -163,7 +172,14 @@ class DecisionFrameInput(ContractModel):
 
 class DecisionFrameView(ContractModel):
     schema_version: Literal["1.0"]
-    question: Annotated[str, Field(min_length=1, max_length=500)]
+    question: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=500,
+            pattern=DECISION_QUESTION_PATTERN,
+        ),
+    ]
     context: Annotated[str, Field(max_length=10000)]
     options: Annotated[list[DecisionOption], Field(min_length=2, max_length=8)]
     criteria: Annotated[list[CriterionView], Field(min_length=1, max_length=10)]

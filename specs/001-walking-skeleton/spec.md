@@ -391,10 +391,13 @@ by name in the data model but do not gain endpoints in this slice.
 - Invalid contracts return HTTP 422 with stable machine-readable error codes and
   field locations.
 - Missing or out-of-scope resources return the same HTTP 404 shape.
-- Stale revisions return HTTP 409 with the current revision number.
+- Stale revisions return HTTP 409 with stable code `revision_conflict` in the
+  closed `ApiError` shape. The authorized client recovers the current revision
+  through `GET /decisions/{decisionId}` before resubmitting; conflict responses
+  do not add an uncontracted revision field.
 - For non-reset mutations, reused idempotency keys with the same normalized
   request return the original status and resource; reuse with a different
-  request returns HTTP 409.
+  request returns HTTP 409 with stable code `idempotency_conflict`.
 - A reset retry made with the cryptographically valid revoked old cookie, the
   same key, and the same request hash within ten minutes returns the original
   HTTP 202 body and exact `Set-Cookie` value. The same key with a different hash

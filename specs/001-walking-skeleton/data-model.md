@@ -126,7 +126,7 @@ server-derived `workspace_id`. The database also declares
 | `decision_id` | UUID | References Decision |
 | `revision` | integer | Positive and unique per decision |
 | `frame_schema_version` | string | `1.0` for this feature |
-| `question` | string | 1–500 Unicode characters after trimming |
+| `question` | string | 1–500 submitted Unicode characters; surrounding whitespace is preserved, but the value must contain at least one non-whitespace character |
 | `context` | string | 0–10,000 Unicode characters |
 | `options` | JSON array | 2–8 `DecisionOption` objects with unique IDs |
 | `criteria` | JSON array | 1–10 `Criterion` objects; exact entered decimal strings are preserved and normalized strings sum to `100.0000` |
@@ -372,12 +372,12 @@ All constraints contain `id`, `kind`, `label`, and `severity`. Severity is
 
 | Kind | Required value |
 |---|---|
-| `budget` | ISO 4217 currency and non-negative maximum amount |
+| `budget` | Three-uppercase-letter currency-code syntax and non-negative maximum amount; feature 001 does not perform registry membership lookup |
 | `deadline` | ISO 8601 calendar date |
 | `capability` | Required capability slug |
 | `forbidden-vendor` | Vendor name |
-| `license` | Allowed SPDX license identifiers |
-| `residency` | Allowed ISO 3166-1 alpha-2 country codes |
+| `license` | Non-empty unique caller-supplied SPDX identifier allowlist; feature 001 stores these bounded strings without registry membership lookup |
+| `residency` | Non-empty unique two-uppercase-letter country-code allowlist; feature 001 does not perform registry membership lookup |
 | `deployment-mode` | One or more of `managed`, `self-hosted`, `on-device` |
 
 Feature 001 validates and stores these values but does not assess them.
