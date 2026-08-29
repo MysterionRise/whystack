@@ -138,6 +138,7 @@ implementation_bootstrap:
       uuid6: "2025.0.1"
       uvicorn: "0.51.0"
     direct_development_dependencies:
+      hypothesis: "6.160.0"
       pytest: "9.1.1"
       pytest-asyncio: "1.4.0"
       ruff: "0.16.0"

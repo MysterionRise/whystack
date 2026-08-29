@@ -1475,7 +1475,7 @@ def validate_sdlc_wiring(root: Path) -> list[ValidationIssue]:
         backend_development = (
             backend_configuration.get("direct_development_dependencies", {})
         )
-        for name in ("pytest", "pytest-asyncio", "ruff"):
+        for name in ("hypothesis", "pytest", "pytest-asyncio", "ruff"):
             required_pins[f"backend.dev.{name}"] = (
                 backend_development.get(name)
             )

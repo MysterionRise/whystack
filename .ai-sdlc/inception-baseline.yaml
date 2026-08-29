@@ -90,7 +90,7 @@ artifacts:
     sha256: a88c7430c1affc6624f768ff3d571f8e5cca7c0bd5fb15d3e5eba6b7181e07d7
   - path: .ai-sdlc/toolchain.lock.yaml
     owner: lifecycle-governance
-    sha256: c44ae82ef68369cfa87cc0d8708ee5231069afa3cecacd1830d7c0bcc29927d1
+    sha256: 56634cc2e9b2a93fb08bca66141f00aa4438cb52403baeadfbf3c923ba01e101
   - path: .ai-sdlc/source-manifest.yaml
     owner: provenance-governance
     sha256: 3d8645ce1d7cee7e40399c4a7c646c3409b28eadba51e893a661a8a05c6961ea

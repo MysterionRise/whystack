@@ -318,6 +318,7 @@ class BootstrapValidatorBehaviorTests(unittest.TestCase):
             "typescript",
         }
         expected_backend = {
+            "hypothesis",
             "pytest",
             "pytest-asyncio",
             "ruff",
@@ -327,6 +328,7 @@ class BootstrapValidatorBehaviorTests(unittest.TestCase):
         self.assertTrue(expected_backend <= set(backend))
         self.assertTrue(expected_workspace <= set(workspace))
         self.assertEqual("9.39.2", frontend["eslint"])
+        self.assertEqual("6.160.0", backend["hypothesis"])
         self.assertEqual("49.0.0", backend_runtime["cryptography"])
         self.assertEqual("6.0.3", backend_runtime["pyyaml"])
         self.assertEqual("2.0.51", backend_runtime["sqlalchemy[asyncio]"])
