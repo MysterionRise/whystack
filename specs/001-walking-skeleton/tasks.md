@@ -329,17 +329,18 @@ Owning epic: EPIC-001
 
 ## Phase E — Durable run and replay
 
-- [ ] **T016 — RED: specify run creation and deterministic lifecycle**
+- [X] **T016 — RED: specify run creation and deterministic lifecycle**
   - Create `services/backend/tests/integration/test_run_lifecycle.py`.
   - Assert atomic snapshot/job creation, exact fixture version, queued/running/UI
     envelope/completed order, deterministic payload, terminal state, malformed
     envelope failure, and duplicate-run idempotency.
   - Trace: `F-004`, `F-005`, `F-007`, `FR-006`, `NFR-004`,
-    `QUALITY-UI-001`, `QUALITY-SEC-001`, `QUALITY-OPS-001`; `AS-004`.
+    `QUALITY-UI-001`, `QUALITY-SEC-001`, `QUALITY-OPS-001`; `AS-004`,
+    `AS-007`.
   - Verify: the test fails because run services, graph, and worker are absent.
   - Depends on: T015.
 
-- [ ] **T017 — RED: specify leases, restart, and replay**
+- [X] **T017 — RED: specify leases, restart, and replay**
   - Create `services/backend/tests/integration/test_run_replay.py` and
     `services/backend/tests/integration/test_job_leases.py`.
   - Cover reconnect from every sequence, terminal replay, API restart, worker
@@ -349,11 +350,12 @@ Owning epic: EPIC-001
     non-sensitive completion record and deletes the workspace, the
     workspace-owned job cascades, retries do not duplicate the completion, and
     the retained record cannot authorize or reconstruct the deleted workspace.
-  - Trace: `F-004`, `F-005`, `F-006`, `NFR-004`, `QUALITY-OPS-001`; `AS-005`.
+  - Trace: `F-004`, `F-005`, `F-006`, `NFR-004`, `QUALITY-OPS-001`; `AS-005`,
+    `AS-007`.
   - Verify: the tests fail because job leasing and stream replay are absent.
   - Depends on: T016.
 
-- [ ] **T018 — GREEN: implement the deterministic graph, worker, and stream**
+- [X] **T018 — GREEN: implement the deterministic graph, worker, and stream**
   - Create `runs/fake_graph.py`, `runs/jobs.py`, `runs/service.py`, `worker.py`,
     `api/routes/runs.py`, and the associated repository transactions.
   - Validate before event insertion, lease and resume jobs, persist each event,
@@ -362,7 +364,7 @@ Owning epic: EPIC-001
     defined in `data-model.md`.
   - Trace: `F-004`, `F-005`, `F-006`, `F-007`, `FR-006`, `NFR-004`,
     `QUALITY-UI-001`, `QUALITY-SEC-001`, `QUALITY-OPS-001`; `AS-004`,
-    `AS-005`.
+    `AS-005`, `AS-007`.
   - Verify: T016 and T017 tests pass.
   - Depends on: T016, T017.
 

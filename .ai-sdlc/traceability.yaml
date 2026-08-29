@@ -620,7 +620,6 @@ acceptance_scenarios:
     tasks:
       - "T008"
       - "T009"
-      - "T016"
       - "T017"
       - "T018"
       - "T026"
@@ -679,6 +678,9 @@ acceptance_scenarios:
       - "T012"
       - "T013"
       - "T015"
+      - "T016"
+      - "T017"
+      - "T018"
       - "T020"
       - "T021"
       - "T028"
@@ -688,6 +690,8 @@ acceptance_scenarios:
       - "services/backend/tests/unit/test_persistence_models.py"
       - "services/backend/tests/integration/test_migrations.py"
       - "services/backend/tests/api/test_session_reset.py"
+      - "services/backend/tests/integration/test_run_lifecycle.py"
+      - "services/backend/tests/integration/test_job_leases.py"
       - "services/backend/tests/security/test_workspace_isolation.py"
       - "services/backend/tests/security/test_telemetry_redaction.py"
       - "services/backend/tests/security/test_telemetry_metrics.py"
@@ -797,16 +801,22 @@ task_index:
     verification: "All 63 decision API cases, all 6 bounded revision/idempotency properties, and the 202-test backend suite pass with exact replay, immutable contiguous revisions, and integer-only normalization."
   T016:
     stage: "red"
-    scenarios: ["AS-004", "AS-005"]
-    verification: "Run lifecycle tests fail."
+    status: "completed"
+    scenarios: ["AS-004", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t016-t018-execution.md"
+    verification: "All 7 run-lifecycle cases reached migrated disposable PostgreSQL and failed at the absent run route with HTTP 404."
   T017:
     stage: "red"
-    scenarios: ["AS-005"]
-    verification: "Lease and replay tests fail."
+    status: "completed"
+    scenarios: ["AS-005", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t016-t018-execution.md"
+    verification: "All 8 replay and lease cases reached the intended missing run-stream, job-lease, and worker seams; no collection or fixture failure caused RED."
   T018:
     stage: "green"
-    scenarios: ["AS-004", "AS-005"]
-    verification: "Run lifecycle, lease, and replay tests pass."
+    status: "completed"
+    scenarios: ["AS-004", "AS-005", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t016-t018-execution.md"
+    verification: "All 15 run lifecycle, replay, lease, restart, and deletion cases plus the 217-test backend regression suite pass."
   T019:
     stage: "red"
     scenarios: ["AS-001"]

@@ -32,10 +32,12 @@ from ai_cto_cockpit.api.routes.config import (
     router as config_router,
 )
 from ai_cto_cockpit.api.routes.decisions import router as decisions_router
+from ai_cto_cockpit.api.routes.runs import router as runs_router
 from ai_cto_cockpit.persistence.session import (
     create_database_engine,
     create_session_factory,
 )
+from ai_cto_cockpit.runs.service import RunStreamPolicy
 from ai_cto_cockpit.security.guest_session import GuestSessionCodec, SessionKeyRing
 from ai_cto_cockpit.settings import Settings
 
@@ -176,6 +178,7 @@ def create_app(
     clock: Clock | None = None,
     database_clock: DatabaseClock | None = None,
     reset_response_serializer: ResetResponseSerializer | None = None,
+    run_stream_policy: RunStreamPolicy | None = None,
 ) -> FastAPI:
     """Build one mode-frozen application with explicit, testable dependencies."""
 
@@ -219,6 +222,7 @@ def create_app(
     application.state.reset_serializer = (
         reset_response_serializer or default_reset_response_serializer
     )
+    application.state.run_stream_policy = run_stream_policy or RunStreamPolicy()
     if settings is not None:
         owned_engine = _install_runtime(
             application,
@@ -229,6 +233,7 @@ def create_app(
 
     application.include_router(config_router)
     application.include_router(decisions_router)
+    application.include_router(runs_router)
     application.include_router(create_reserved_capability_router(route_mode))
     application.add_api_route("/api/v1/health/live", liveness, methods=["GET"])
     application.add_api_route("/api/v1/health/ready", readiness, methods=["GET"])

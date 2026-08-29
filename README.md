@@ -49,7 +49,8 @@ contract, and persistence walking skeleton on the five-process Compose topology:
 
 - a Next.js web process with a health endpoint;
 - a FastAPI process with separate liveness and dependency-readiness endpoints;
-- a non-HTTP Python worker process with a process health check;
+- a non-HTTP Python worker with a process health check, PostgreSQL job leases,
+  attempt fencing, and restart-safe execution;
 - PostgreSQL as the canonical store;
 - Qdrant as a derived, rebuildable store that is readiness-only in feature 001;
 - canonical Pydantic public contracts with deterministic checked OpenAPI and
@@ -70,6 +71,15 @@ contract, and persistence walking skeleton on the five-process Compose topology:
   byte-exact replay across process restart and retained-key rotation;
 - pre-body 403/501 capability boundaries for uploads and the reserved
   `local-git`, `github`, and `web` connector routes;
+- atomic, idempotent run creation bound to an immutable decision revision,
+  with a queued event and durable execute-run job committed together;
+- an explicit three-node LangGraph deterministic fixture that persists the
+  closed `recommendation-summary@1.0` envelope and a single terminal event;
+- workspace-scoped run snapshots and PostgreSQL-backed SSE replay with
+  persisted sequence IDs, `Last-Event-ID` recovery, heartbeats, and terminal
+  close across API or worker restart;
+- atomic reset-deletion execution that retains only the non-sensitive
+  completion receipt after the guest workspace and owned job cascade;
 - isolated Compose networks and persistent service volumes.
 
 No retrieval, provider calls, recommendation intelligence, long-term memory,
@@ -114,7 +124,13 @@ The current Spec Kit status is:
   idempotent responses behind transaction and aggregate locks. The structured
   execution record is
   [`specs/001-walking-skeleton/evidence/t015-execution.md`](specs/001-walking-skeleton/evidence/t015-execution.md).
-- T016 is the next unstarted task.
+- T016–T018 are complete: their retained RED proves the run, stream, lease, and
+  worker seams were absent; the GREEN implementation now provides atomic run
+  creation, deterministic LangGraph execution, fenced worker recovery,
+  persisted SSE replay, and atomic guest deletion. The structured execution
+  record is
+  [`specs/001-walking-skeleton/evidence/t016-t018-execution.md`](specs/001-walking-skeleton/evidence/t016-t018-execution.md).
+- T019, the health/readiness RED task, is the next unstarted task.
 
 ## Developer workflow
 
@@ -171,6 +187,10 @@ uv run --project services/backend --locked pytest \
   services/backend/tests/security/test_guest_session.py \
   services/backend/tests/api/test_session_reset.py \
   services/backend/tests/security/test_demo_capabilities.py
+uv run --project services/backend --locked pytest \
+  services/backend/tests/integration/test_run_lifecycle.py \
+  services/backend/tests/integration/test_run_replay.py \
+  services/backend/tests/integration/test_job_leases.py
 ```
 
 ## Start here

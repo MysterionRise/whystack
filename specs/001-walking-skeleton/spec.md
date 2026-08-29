@@ -442,9 +442,9 @@ by name in the data model but do not gain endpoints in this slice.
 | `AS-002` | `services/backend/tests/api/test_config.py`; `services/backend/tests/security/test_request_boundaries.py`; `apps/web/tests/config-boundary.test.ts`; `apps/web/tests/security-boundary.test.ts` |
 | `AS-003` | `services/backend/tests/api/test_decisions.py`; `services/backend/tests/property/test_revision_idempotency.py` |
 | `AS-004` | `services/backend/tests/integration/test_run_lifecycle.py`; `apps/web/tests/recommendation-summary.test.tsx` |
-| `AS-005` | `services/backend/tests/integration/test_run_replay.py`; `apps/web/e2e/walking-skeleton.spec.ts` |
+| `AS-005` | `services/backend/tests/integration/test_run_replay.py`; `services/backend/tests/integration/test_job_leases.py`; `apps/web/e2e/walking-skeleton.spec.ts` |
 | `AS-006` | `services/backend/tests/security/test_demo_capabilities.py`; `services/backend/tests/security/test_request_boundaries.py` |
-| `AS-007` | `services/backend/tests/api/test_session_reset.py`; `services/backend/tests/security/test_workspace_isolation.py`; `services/backend/tests/security/test_telemetry_redaction.py`; `services/backend/tests/security/test_telemetry_metrics.py` |
+| `AS-007` | `services/backend/tests/api/test_session_reset.py`; `services/backend/tests/integration/test_run_lifecycle.py`; `services/backend/tests/integration/test_job_leases.py`; `services/backend/tests/security/test_workspace_isolation.py`; `services/backend/tests/security/test_telemetry_redaction.py`; `services/backend/tests/security/test_telemetry_metrics.py` |
 | `AS-008` | `services/backend/tests/contracts/test_openapi.py`; `apps/web/tests/ui-envelope-contract.test.ts`; `apps/web/tests/recommendation-summary.test.tsx`; `apps/web/e2e/walking-skeleton-accessibility.spec.ts`; `evals/results/feature-001/accessibility-manual.md` |
 
 ## Clarification record
