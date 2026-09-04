@@ -1,0 +1,133 @@
+schema_version: 1
+baseline_id: IB-001
+project: ai-cto-cockpit
+created_on: "2026-07-27"
+state: accepted-for-specification
+readiness_verdict: PASS
+application_status: feature-001-in-progress-through-t005
+
+intent:
+  primary_user: technical-founder-or-hands-on-engineering-leader
+  core_job: evidence-backed-architecture-decision
+  public_demo: original-synthetic-two-decision-journey
+  local_profile: local-canonical-storage-with-disclosed-remote-inference
+
+authority:
+  inception: bmad-method
+  feature_delivery: github-spec-kit
+  duplicate_implementation_loops: prohibited
+  workflow: .ai-sdlc/WORKFLOW.md
+
+toolchain:
+  lock_file: .ai-sdlc/toolchain.lock.yaml
+  bmad_method: "6.10.0"
+  bmad_tea: "1.19.1"
+  github_spec_kit: "0.14.2"
+
+scope:
+  functional_requirements:
+    - FR-001
+    - FR-002
+    - FR-003
+    - FR-004
+    - FR-005
+    - FR-006
+    - FR-007
+    - FR-008
+    - FR-009
+    - FR-010
+    - FR-011
+    - FR-012
+  non_functional_requirements:
+    - NFR-001
+    - NFR-002
+    - NFR-003
+    - NFR-004
+    - NFR-005
+    - NFR-006
+    - NFR-007
+    - NFR-008
+    - NFR-009
+    - NFR-010
+    - NFR-011
+    - NFR-012
+  epics:
+    - EPIC-001
+    - EPIC-002
+    - EPIC-003
+    - EPIC-004
+    - EPIC-005
+    - EPIC-006
+  quality_gates:
+    - QUALITY-RET-001
+    - QUALITY-RET-002
+    - QUALITY-GRD-001
+    - QUALITY-REC-001
+    - QUALITY-MEM-001
+    - QUALITY-UI-001
+    - QUALITY-SEC-001
+    - QUALITY-PERF-001
+    - QUALITY-COST-001
+    - QUALITY-OPS-001
+
+change_control:
+  feature_local: update-active-spec-kit-feature-and-rerun-analysis
+  cross_cutting: create-numbered-bmad-baseline-change-and-rerun-readiness
+  cross_cutting_triggers:
+    - persona-or-product-outcome
+    - deployment-profile
+    - data-egress
+    - ui-authority
+    - canonical-storage-ownership
+    - consequential-action
+    - blocking-quality-threshold
+
+artifacts:
+  - path: .ai-sdlc/WORKFLOW.md
+    owner: lifecycle-governance
+    sha256: 802f68488ea4227a87b509bf9a90c07c976657bba184e7aefd010f9dc88fda71
+  - path: .ai-sdlc/toolchain.lock.yaml
+    owner: lifecycle-governance
+    sha256: 98162533dddfda2dc836e7dd34e3318335fcfb046d9617480ecfd2150f03deb4
+  - path: .ai-sdlc/source-manifest.yaml
+    owner: provenance-governance
+    sha256: 1428d4b7ba25d0310002e2fc5ff69bb64743be284d05c98b634bb5b7d3287b8e
+  - path: _bmad-output/project-context.md
+    owner: bmad-method
+    sha256: 09dae20a6ac018e0cf0979bd8062737de375cc19a4b02f1e986f55814fd70c05
+  - path: _bmad-output/planning-artifacts/product-brief.md
+    owner: bmad-method
+    sha256: 9b26767d97eaa43700878e5a5a8230b957d8724b405435b7440ad402fe45d6e2
+  - path: _bmad-output/planning-artifacts/prd.md
+    owner: bmad-method
+    sha256: a4eec29a558cf2871a8c2a4f8905652cd7bb8200385c9b5eac8ef815dcbf9cc7
+  - path: _bmad-output/planning-artifacts/DESIGN.md
+    owner: bmad-method
+    sha256: 4b816d7a559428ae15b7b4452fcaf530720f64654a400ecffb4566c1389daa65
+  - path: _bmad-output/planning-artifacts/EXPERIENCE.md
+    owner: bmad-method
+    sha256: 0904f41224d620a385307d62f6062afa96ab62cddb998a624bdc3b43410f1321
+  - path: _bmad-output/planning-artifacts/ARCHITECTURE-SPINE.md
+    owner: bmad-method
+    sha256: acc0af6fe49ad12be2e861aea659bfc3e2c24da39d191ac1ca53453477308f35
+  - path: _bmad-output/planning-artifacts/epics.md
+    owner: bmad-method
+    sha256: 68623308773f9540f27ea938d29b45baaded97eea2a4c267133356252ebb3fb7
+  - path: _bmad-output/planning-artifacts/implementation-readiness.md
+    owner: bmad-method
+    sha256: fa625e342628613b417f9f24b8fd656aac2453da98040cebe29529fc965ae5a2
+  - path: _bmad-output/test-artifacts/system-test-design.md
+    owner: bmad-test-architect
+    sha256: 7a279dd19797a3429090fdb0cdf1ee4a596290bc33e882ff3931aa06822ec409
+  - path: _bmad-output/test-artifacts/ai-quality-contract.md
+    owner: bmad-test-architect-and-project
+    sha256: a0643f732fe9057bcfdb292b9a38a6a8fdcc570bf80e0e7ec0f0ddc7bdb9f67e
+
+handoff:
+  first_epic: EPIC-001
+  first_feature: 001-walking-skeleton
+  entry_conditions:
+    - bootstrap-verifier-passes-in-clean-copy
+    - spec-kit-analysis-has-no-critical-mismatch
+    - first-production-behavior-starts-with-failing-acceptance-test
+  reopen_bmad_when: cross-cutting-change-triggered

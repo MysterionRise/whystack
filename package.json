@@ -1,17 +1,18 @@
 {
-  "name": "docintel",
+  "name": "ai-cto-cockpit",
+  "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": "11.17.0"
+  },
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "type-check": "turbo type-check",
-    "clean": "turbo clean && rm -rf node_modules"
+    "check": "corepack pnpm --dir apps/web check && corepack pnpm exec pyright",
+    "test": "corepack pnpm --dir apps/web test",
+    "test:e2e": "corepack pnpm --dir apps/web test:e2e"
   },
   "devDependencies": {
-    "prettier": "^3",
-    "turbo": "^2",
-    "vitest": "^4.0.18"
-  },
-  "packageManager": "pnpm@9.15.0"
+    "pyright": "1.1.411"
+  }
 }

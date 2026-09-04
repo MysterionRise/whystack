@@ -1,9 +1,0 @@
-{
-  "extends": "@docintel/tsconfig/base.json",
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
-    "lib": ["ES2020", "DOM"],
-    "noEmit": true
-  },
-  "include": ["src"]
-}

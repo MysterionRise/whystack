@@ -1,0 +1,45 @@
+PNPM := corepack pnpm
+NODE_VERSION := v24.18.0
+PNPM_VERSION := 11.17.0
+PYTHON_VERSION := 3.12.13
+UV := uv
+
+.PHONY: check contracts-check contracts-generate install node-toolchain-check test-compose-readiness toolchain-check
+
+install: node-toolchain-check
+	$(PNPM) install --frozen-lockfile
+	$(UV) sync --project services/backend --locked --all-groups --python $(PYTHON_VERSION) --managed-python
+
+check: node-toolchain-check
+	$(UV) run --project services/backend --no-sync ruff check services/backend/src services/backend/tests tests/e2e
+	$(UV) run --project services/backend --no-sync ruff format --check services/backend/src services/backend/tests tests/e2e
+	$(PNPM) exec pyright
+	$(PNPM) --dir apps/web check
+
+contracts-generate: node-toolchain-check
+	$(UV) run --project services/backend --locked python -m ai_cto_cockpit.contracts.generate --write
+	$(PNPM) --dir apps/web contracts:generate
+
+contracts-check: node-toolchain-check
+	$(UV) run --project services/backend --locked python -m ai_cto_cockpit.contracts.generate --check
+	$(PNPM) --dir apps/web contracts:check
+	$(UV) run --project services/backend --locked pytest services/backend/tests/contracts
+
+node-toolchain-check:
+	@actual_node="$$(node --version)"; test "$$actual_node" = "$(NODE_VERSION)" || { echo "Node $(NODE_VERSION) is required; found $$actual_node" >&2; exit 1; }
+	@actual_pnpm="$$($(PNPM) --version)"; test "$$actual_pnpm" = "$(PNPM_VERSION)" || { echo "pnpm $(PNPM_VERSION) is required; found $$actual_pnpm" >&2; exit 1; }
+
+toolchain-check: node-toolchain-check
+	node --version
+	$(UV) --version
+	$(PNPM) --version
+	$(UV) run --project services/backend --no-sync pytest --version
+	$(UV) run --project services/backend --no-sync ruff --version
+	$(PNPM) exec pyright --version
+	$(PNPM) --dir apps/web exec vitest --version
+	$(PNPM) --dir apps/web exec playwright --version
+	$(PNPM) --dir apps/web exec eslint --version
+	$(PNPM) --dir apps/web exec tsc --version
+
+test-compose-readiness:
+	$(UV) run --project services/backend --no-sync pytest tests/e2e/test_compose_readiness.py

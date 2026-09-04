@@ -1,0 +1,891 @@
+schema_version: "1.0"
+status: "feature-001-implementation-in-progress"
+inception_baseline: "IB-002"
+authorities:
+  product_requirements: "_bmad-output/planning-artifacts/prd.md"
+  epics: "_bmad-output/planning-artifacts/epics.md"
+  quality_contract: "_bmad-output/test-artifacts/ai-quality-contract.md"
+  feature_delivery: ".specify/workflows/ai-feature-delivery/workflow.yml"
+  constitution: ".specify/memory/constitution.md"
+  product_map: "specs/000-product-map/spec.md"
+active_feature:
+  id: "001-walking-skeleton"
+  epic: "EPIC-001"
+  specification: "specs/001-walking-skeleton/spec.md"
+  plan: "specs/001-walking-skeleton/plan.md"
+  tasks: "specs/001-walking-skeleton/tasks.md"
+  contract:
+    - "specs/001-walking-skeleton/contracts/openapi.yaml"
+    - "specs/001-walking-skeleton/contracts/ui-envelope.schema.json"
+
+functional_requirements:
+  FR-001:
+    title: "Deployment-aware workspace configuration"
+    epics:
+      - "EPIC-001"
+      - "EPIC-004"
+      - "EPIC-006"
+    features:
+      - "001-walking-skeleton"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-002"
+      - "AS-006"
+      - "AS-007"
+    active_tasks:
+      - "T010"
+      - "T011"
+      - "T012"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+      - "T028"
+      - "T029"
+  FR-002:
+    title: "Source ingestion and immutable revision provenance"
+    epics:
+      - "EPIC-002"
+      - "EPIC-004"
+      - "EPIC-006"
+    features:
+      - "002-grounded-decision"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-003:
+    title: "Versioned decision framing"
+    epics:
+      - "EPIC-001"
+      - "EPIC-006"
+    features:
+      - "001-walking-skeleton"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-003"
+      - "AS-007"
+    active_tasks:
+      - "T008"
+      - "T009"
+      - "T013"
+      - "T014"
+      - "T015"
+      - "T024"
+      - "T025"
+      - "T028"
+      - "T029"
+  FR-004:
+    title: "Scoped hybrid evidence retrieval"
+    epics:
+      - "EPIC-002"
+      - "EPIC-006"
+    features:
+      - "002-grounded-decision"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-005:
+    title: "Deterministic option assessment and recommendation"
+    epics:
+      - "EPIC-002"
+      - "EPIC-006"
+    features:
+      - "002-grounded-decision"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-006:
+    title: "Controlled streamed decision UI and replay"
+    epics:
+      - "EPIC-001"
+      - "EPIC-005"
+      - "EPIC-006"
+    features:
+      - "001-walking-skeleton"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-004"
+      - "AS-005"
+      - "AS-008"
+    active_tasks:
+      - "T004"
+      - "T005"
+      - "T006"
+      - "T007"
+      - "T008"
+      - "T009"
+      - "T016"
+      - "T017"
+      - "T018"
+      - "T026"
+      - "T027"
+      - "T028"
+      - "T029"
+  FR-007:
+    title: "Explicit outcome event ledger"
+    epics:
+      - "EPIC-003"
+      - "EPIC-006"
+    features:
+      - "003-outcome-to-memory"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-008:
+    title: "Provenance-backed long-term memory"
+    epics:
+      - "EPIC-003"
+      - "EPIC-006"
+    features:
+      - "003-outcome-to-memory"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-009:
+    title: "Auditable decision export"
+    epics:
+      - "EPIC-003"
+      - "EPIC-006"
+    features:
+      - "003-outcome-to-memory"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-010:
+    title: "Read-only local-data connectors and resumable sync"
+    epics:
+      - "EPIC-004"
+      - "EPIC-006"
+    features:
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  FR-011:
+    title: "Seeded public-demo journey and ephemeral reset"
+    epics:
+      - "EPIC-001"
+      - "EPIC-003"
+      - "EPIC-005"
+      - "EPIC-006"
+    features:
+      - "001-walking-skeleton"
+      - "003-outcome-to-memory"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-001"
+      - "AS-002"
+      - "AS-006"
+      - "AS-007"
+    active_tasks:
+      - "T002"
+      - "T003"
+      - "T009"
+      - "T010"
+      - "T011"
+      - "T012"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+      - "T028"
+      - "T029"
+  FR-012:
+    title: "Inspection and evaluation surfaces"
+    epics:
+      - "EPIC-002"
+      - "EPIC-003"
+      - "EPIC-005"
+      - "EPIC-006"
+    features:
+      - "002-grounded-decision"
+      - "003-outcome-to-memory"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+
+nonfunctional_requirements:
+  NFR-001:
+    title: "Evidence integrity and groundedness"
+    features:
+      - "002-grounded-decision"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  NFR-002:
+    title: "Tenant isolation and authorization"
+    features:
+      - "001-walking-skeleton"
+      - "002-grounded-decision"
+      - "003-outcome-to-memory"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-002"
+      - "AS-006"
+      - "AS-007"
+    active_tasks:
+      - "T008"
+      - "T009"
+      - "T010"
+      - "T011"
+      - "T012"
+      - "T013"
+      - "T015"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+  NFR-003:
+    title: "Untrusted-content and data-egress security"
+    features:
+      - "002-grounded-decision"
+      - "003-outcome-to-memory"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  NFR-004:
+    title: "Durability, idempotency, and recovery"
+    features:
+      - "001-walking-skeleton"
+      - "002-grounded-decision"
+      - "003-outcome-to-memory"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-001"
+      - "AS-003"
+      - "AS-004"
+      - "AS-005"
+      - "AS-007"
+    active_tasks:
+      - "T002"
+      - "T003"
+      - "T008"
+      - "T009"
+      - "T010"
+      - "T012"
+      - "T013"
+      - "T014"
+      - "T015"
+      - "T016"
+      - "T017"
+      - "T018"
+      - "T019"
+      - "T021"
+  NFR-005:
+    title: "Interactive performance"
+    features:
+      - "002-grounded-decision"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    active_quality_gate: "QUALITY-PERF-001"
+  NFR-006:
+    title: "Cost containment"
+    features:
+      - "002-grounded-decision"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    delivery_state: "roadmap"
+  NFR-007:
+    title: "Accessible controlled UI"
+    features:
+      - "001-walking-skeleton"
+      - "003-outcome-to-memory"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-004"
+      - "AS-008"
+    active_tasks:
+      - "T006"
+      - "T007"
+      - "T024"
+      - "T025"
+      - "T026"
+      - "T027"
+      - "T030"
+      - "T031"
+  NFR-008:
+    title: "Privacy-preserving observability"
+    features:
+      - "001-walking-skeleton"
+      - "002-grounded-decision"
+      - "003-outcome-to-memory"
+      - "004-live-connectors"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-002"
+      - "AS-006"
+      - "AS-007"
+    active_tasks:
+      - "T010"
+      - "T011"
+      - "T012"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+  NFR-009:
+    title: "Reproducible portable operation"
+    features:
+      - "001-walking-skeleton"
+      - "002-grounded-decision"
+      - "004-live-connectors"
+      - "005-portfolio-experience"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-001"
+    active_tasks:
+      - "T001"
+      - "T002"
+      - "T003"
+      - "T009"
+      - "T019"
+      - "T021"
+      - "T034"
+  NFR-010:
+    title: "Data lifecycle and deletion"
+    features:
+      - "003-outcome-to-memory"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    active_slice_boundary:
+      - "Guest reset revokes access and queues overlay deletion."
+  NFR-011:
+    title: "Versioned contract compatibility"
+    features:
+      - "001-walking-skeleton"
+      - "002-grounded-decision"
+      - "003-outcome-to-memory"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    active_scenarios:
+      - "AS-003"
+      - "AS-008"
+    active_tasks:
+      - "T001"
+      - "T004"
+      - "T005"
+      - "T006"
+      - "T007"
+      - "T013"
+      - "T015"
+      - "T034"
+  NFR-012:
+    title: "License-safe provenance and supply chain"
+    features:
+      - "002-grounded-decision"
+      - "004-live-connectors"
+      - "006-public-oss-release"
+    bootstrap_evidence:
+      - "docs/provenance.md"
+      - "seed/sample-project/manifest.yaml"
+
+quality_requirements:
+  QUALITY-RET-001:
+    title: "Relevant evidence recall"
+    first_feature: "002-grounded-decision"
+    delivery_state: "roadmap"
+  QUALITY-RET-002:
+    title: "Ranking quality and honest insufficiency"
+    first_feature: "002-grounded-decision"
+    delivery_state: "roadmap"
+  QUALITY-GRD-001:
+    title: "Citation and claim groundedness"
+    first_feature: "002-grounded-decision"
+    delivery_state: "roadmap"
+  QUALITY-REC-001:
+    title: "Recommendation safety and usefulness"
+    first_feature: "002-grounded-decision"
+    delivery_state: "roadmap"
+  QUALITY-MEM-001:
+    title: "Memory correctness and influence"
+    first_feature: "003-outcome-to-memory"
+    delivery_state: "roadmap"
+  QUALITY-UI-001:
+    title: "Controlled and accessible Generative UI"
+    first_feature: "001-walking-skeleton"
+    scenarios:
+      - "AS-004"
+      - "AS-008"
+    tasks:
+      - "T004"
+      - "T005"
+      - "T006"
+      - "T007"
+      - "T016"
+      - "T018"
+      - "T026"
+      - "T027"
+      - "T030"
+      - "T031"
+    planned_evidence:
+      - "services/backend/tests/contracts/test_ui_schema.py"
+      - "apps/web/tests/ui-envelope-contract.test.ts"
+      - "apps/web/tests/recommendation-summary.test.tsx"
+      - "apps/web/e2e/walking-skeleton-accessibility.spec.ts"
+      - "evals/feature-001/accessibility-manual-checklist.md"
+      - "evals/results/feature-001/accessibility-manual.md"
+  QUALITY-SEC-001:
+    title: "AI and workspace security"
+    first_feature: "001-walking-skeleton"
+    feature_001_scope: "EPIC-001 relevant portions: workspace isolation, capability denial, controlled UI input, request/proxy boundaries, and telemetry redaction; later feature-owned attack stages remain blocking when introduced."
+    scenarios:
+      - "AS-002"
+      - "AS-004"
+      - "AS-006"
+      - "AS-007"
+      - "AS-008"
+    tasks:
+      - "T004"
+      - "T005"
+      - "T006"
+      - "T007"
+      - "T008"
+      - "T009"
+      - "T011"
+      - "T012"
+      - "T016"
+      - "T018"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+      - "T026"
+      - "T027"
+    planned_evidence:
+      - "services/backend/tests/contracts/test_ui_schema.py"
+      - "apps/web/tests/ui-envelope-contract.test.ts"
+      - "services/backend/tests/integration/test_run_lifecycle.py"
+      - "apps/web/tests/recommendation-summary.test.tsx"
+      - "services/backend/tests/security/test_demo_capabilities.py"
+      - "services/backend/tests/security/test_workspace_isolation.py"
+      - "services/backend/tests/security/test_telemetry_redaction.py"
+      - "services/backend/tests/security/test_telemetry_metrics.py"
+      - "services/backend/tests/security/test_request_boundaries.py"
+      - "apps/web/tests/security-boundary.test.ts"
+  QUALITY-PERF-001:
+    title: "Interactive latency"
+    first_feature: "001-walking-skeleton"
+    scenarios:
+      - "AS-001"
+      - "AS-004"
+      - "AS-005"
+    tasks:
+      - "T032"
+      - "T033"
+    planned_evidence:
+      - "evals/feature-001/load_test.js"
+      - "evals/feature-001/quality.yaml"
+      - "evals/results/feature-001/manifest.json"
+  QUALITY-COST-001:
+    title: "Bounded inference spend"
+    first_feature: "002-grounded-decision"
+    feature_001_evidence: "No provider call; measured provider spend is zero."
+  QUALITY-OPS-001:
+    title: "Durability, replay, reconciliation, and deletion"
+    first_feature: "001-walking-skeleton"
+    feature_001_scope: "EPIC-001 relevant portions: decision/run/session durability, idempotency, leases, replay, restart, expiry, and reset deletion jobs; outcome, memory, source, blob, backup/restore, and Qdrant reconciliation evidence follows the features that create those states."
+    scenarios:
+      - "AS-001"
+      - "AS-003"
+      - "AS-004"
+      - "AS-005"
+      - "AS-007"
+    tasks:
+      - "T002"
+      - "T003"
+      - "T009"
+      - "T010"
+      - "T012"
+      - "T014"
+      - "T016"
+      - "T017"
+      - "T018"
+      - "T019"
+      - "T021"
+      - "T028"
+      - "T029"
+      - "T032"
+      - "T033"
+    planned_evidence:
+      - "services/backend/tests/unit/test_persistence_models.py"
+      - "services/backend/tests/integration/test_migrations.py"
+      - "services/backend/tests/api/test_decisions.py"
+      - "services/backend/tests/api/test_session_reset.py"
+      - "services/backend/tests/property/test_revision_idempotency.py"
+      - "services/backend/tests/integration/test_run_replay.py"
+      - "services/backend/tests/integration/test_job_leases.py"
+      - "apps/web/e2e/walking-skeleton.spec.ts"
+
+acceptance_scenarios:
+  AS-001:
+    title: "Deployment readiness"
+    baseline_requirements:
+      - "FR-011"
+      - "NFR-004"
+      - "NFR-009"
+      - "QUALITY-OPS-001"
+      - "QUALITY-PERF-001"
+    tasks:
+      - "T001"
+      - "T002"
+      - "T003"
+      - "T009"
+      - "T019"
+      - "T021"
+      - "T032"
+      - "T033"
+      - "T034"
+    tests:
+      - "tests/e2e/test_compose_readiness.py"
+      - "services/backend/tests/integration/test_health.py"
+      - "services/backend/tests/integration/test_migrations.py"
+      - "evals/feature-001/load_test.js"
+  AS-002:
+    title: "Server-derived public-demo configuration"
+    baseline_requirements:
+      - "FR-001"
+      - "FR-011"
+      - "NFR-002"
+      - "NFR-008"
+      - "QUALITY-SEC-001"
+    tasks:
+      - "T010"
+      - "T012"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+      - "T028"
+      - "T029"
+      - "T034"
+    tests:
+      - "services/backend/tests/api/test_config.py"
+      - "services/backend/tests/security/test_request_boundaries.py"
+      - "apps/web/tests/config-boundary.test.ts"
+      - "apps/web/tests/security-boundary.test.ts"
+      - "apps/web/e2e/walking-skeleton.spec.ts"
+  AS-003:
+    title: "Versioned decision framing"
+    baseline_requirements:
+      - "FR-003"
+      - "NFR-004"
+      - "NFR-011"
+      - "QUALITY-OPS-001"
+    tasks:
+      - "T008"
+      - "T009"
+      - "T013"
+      - "T014"
+      - "T015"
+      - "T024"
+      - "T025"
+      - "T028"
+      - "T029"
+      - "T034"
+    tests:
+      - "services/backend/tests/api/test_decisions.py"
+      - "services/backend/tests/property/test_revision_idempotency.py"
+      - "apps/web/tests/decision-frame-form.test.tsx"
+  AS-004:
+    title: "Controlled streamed recommendation"
+    baseline_requirements:
+      - "FR-006"
+      - "NFR-004"
+      - "NFR-007"
+      - "QUALITY-UI-001"
+      - "QUALITY-SEC-001"
+      - "QUALITY-OPS-001"
+      - "QUALITY-PERF-001"
+    tasks:
+      - "T016"
+      - "T018"
+      - "T026"
+      - "T027"
+      - "T028"
+      - "T029"
+      - "T032"
+      - "T033"
+      - "T034"
+    tests:
+      - "services/backend/tests/integration/test_run_lifecycle.py"
+      - "apps/web/tests/recommendation-summary.test.tsx"
+      - "evals/feature-001/load_test.js"
+  AS-005:
+    title: "Resume after disconnect"
+    baseline_requirements:
+      - "FR-006"
+      - "NFR-004"
+      - "QUALITY-OPS-001"
+      - "QUALITY-PERF-001"
+    tasks:
+      - "T008"
+      - "T009"
+      - "T017"
+      - "T018"
+      - "T026"
+      - "T027"
+      - "T028"
+      - "T029"
+      - "T032"
+      - "T033"
+      - "T034"
+    tests:
+      - "services/backend/tests/integration/test_run_replay.py"
+      - "services/backend/tests/integration/test_job_leases.py"
+      - "apps/web/tests/run-stream.test.ts"
+      - "apps/web/e2e/walking-skeleton.spec.ts"
+  AS-006:
+    title: "Public-demo data boundary"
+    baseline_requirements:
+      - "FR-001"
+      - "FR-011"
+      - "NFR-002"
+      - "NFR-008"
+      - "QUALITY-SEC-001"
+    tasks:
+      - "T011"
+      - "T012"
+      - "T020"
+      - "T021"
+      - "T022"
+      - "T023"
+      - "T024"
+      - "T025"
+      - "T028"
+      - "T029"
+      - "T034"
+    tests:
+      - "services/backend/tests/security/test_demo_capabilities.py"
+      - "services/backend/tests/security/test_request_boundaries.py"
+      - "apps/web/tests/config-boundary.test.ts"
+      - "apps/web/tests/security-boundary.test.ts"
+      - "apps/web/tests/decision-frame-form.test.tsx"
+  AS-007:
+    title: "Workspace isolation, reset replay, and redacted observability"
+    baseline_requirements:
+      - "FR-001"
+      - "FR-003"
+      - "FR-011"
+      - "NFR-002"
+      - "NFR-004"
+      - "NFR-008"
+      - "QUALITY-SEC-001"
+      - "QUALITY-OPS-001"
+    tasks:
+      - "T008"
+      - "T009"
+      - "T010"
+      - "T012"
+      - "T013"
+      - "T015"
+      - "T016"
+      - "T017"
+      - "T018"
+      - "T020"
+      - "T021"
+      - "T028"
+      - "T029"
+      - "T034"
+    tests:
+      - "services/backend/tests/unit/test_persistence_models.py"
+      - "services/backend/tests/integration/test_migrations.py"
+      - "services/backend/tests/api/test_session_reset.py"
+      - "services/backend/tests/integration/test_run_lifecycle.py"
+      - "services/backend/tests/integration/test_job_leases.py"
+      - "services/backend/tests/security/test_workspace_isolation.py"
+      - "services/backend/tests/security/test_telemetry_redaction.py"
+      - "services/backend/tests/security/test_telemetry_metrics.py"
+      - "apps/web/e2e/walking-skeleton.spec.ts"
+  AS-008:
+    title: "Contract and accessibility integrity"
+    baseline_requirements:
+      - "FR-006"
+      - "NFR-007"
+      - "NFR-011"
+      - "QUALITY-UI-001"
+      - "QUALITY-SEC-001"
+    tasks:
+      - "T001"
+      - "T004"
+      - "T005"
+      - "T006"
+      - "T007"
+      - "T024"
+      - "T025"
+      - "T026"
+      - "T027"
+      - "T030"
+      - "T031"
+      - "T034"
+    tests:
+      - "services/backend/tests/contracts/test_openapi.py"
+      - "services/backend/tests/contracts/test_ui_schema.py"
+      - "apps/web/tests/ui-envelope-contract.test.ts"
+      - "apps/web/tests/recommendation-summary.test.tsx"
+      - "apps/web/e2e/walking-skeleton-accessibility.spec.ts"
+      - "evals/feature-001/accessibility-manual-checklist.md"
+      - "evals/results/feature-001/accessibility-manual.md"
+
+task_index:
+  T001:
+    stage: "setup"
+    scenarios: ["AS-001", "AS-008"]
+    verification: "Locked package-manager installation succeeds."
+  T002:
+    stage: "red"
+    scenarios: ["AS-001"]
+    verification: "tests/e2e/test_compose_readiness.py fails for missing topology."
+  T003:
+    stage: "green"
+    scenarios: ["AS-001"]
+    verification: "tests/e2e/test_compose_readiness.py passes."
+  T004:
+    stage: "red"
+    scenarios: ["AS-008"]
+    verification: "Backend contract tests fail for absent canonical models."
+  T005:
+    stage: "green"
+    scenarios: ["AS-008"]
+    verification: "Backend contract tests and contract drift check pass."
+  T006:
+    stage: "red"
+    scenarios: ["AS-008"]
+    verification: "Closed parser and malicious-envelope fuzz tests fail; retained observation: specs/001-walking-skeleton/evidence/t006-t009-execution.md."
+  T007:
+    stage: "green"
+    scenarios: ["AS-008"]
+    verification: "Closed parser, malicious-envelope fuzz, and generation checks pass with zero arbitrary execution."
+  T008:
+    stage: "red"
+    scenarios: ["AS-003", "AS-005", "AS-007"]
+    verification: "services/backend/tests/unit/test_persistence_models.py and services/backend/tests/integration/test_migrations.py fail for absent schema; retained observation: specs/001-walking-skeleton/evidence/t006-t009-execution.md."
+  T009:
+    stage: "green"
+    scenarios: ["AS-001", "AS-003", "AS-005", "AS-007"]
+    verification: "services/backend/tests/unit/test_persistence_models.py, services/backend/tests/integration/test_migrations.py, and tests/e2e/test_compose_readiness.py pass with exact database/repository head equality at 0001_walking_skeleton."
+  T010:
+    stage: "red"
+    status: "completed"
+    scenarios: ["AS-002", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t010-t012-execution.md"
+    verification: "Configuration, guest-session, and reset tests failed during collection because the application factory, security package, and trusted API context were absent."
+  T011:
+    stage: "red"
+    status: "completed"
+    scenarios: ["AS-006"]
+    evidence: "specs/001-walking-skeleton/evidence/t010-t012-execution.md"
+    verification: "All 16 direct-ASGI capability cases failed before settings and reserved routes existed; their preserved receive and side-effect tripwires define the boundary."
+  T012:
+    stage: "green"
+    status: "completed"
+    scenarios: ["AS-002", "AS-006", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t010-t012-execution.md"
+    verification: "The 54-test T010-T011 suite, 133-test backend suite, quality, contract drift, exact migration-head Compose readiness, and bootstrap gates pass."
+  T013:
+    stage: "red"
+    status: "completed"
+    scenarios: ["AS-003", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t013-execution.md"
+    verification: "All 63 decision API acceptance cases reach the migrated disposable PostgreSQL fixture and fail with HTTP 404 because the decision routes and services are absent."
+  T014:
+    stage: "red"
+    status: "completed"
+    scenarios: ["AS-003"]
+    evidence: "specs/001-walking-skeleton/evidence/t014-execution.md"
+    verification: "All 6 bounded Hypothesis cases reach migrated disposable PostgreSQL and fail at the absent decision create route with HTTP 404; shared-fixture regressions and non-RED gates pass."
+  T015:
+    stage: "green"
+    status: "completed"
+    scenarios: ["AS-003", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t015-execution.md"
+    verification: "All 63 decision API cases, all 6 bounded revision/idempotency properties, and the 202-test backend suite pass with exact replay, immutable contiguous revisions, and integer-only normalization."
+  T016:
+    stage: "red"
+    status: "completed"
+    scenarios: ["AS-004", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t016-t018-execution.md"
+    verification: "All 7 run-lifecycle cases reached migrated disposable PostgreSQL and failed at the absent run route with HTTP 404."
+  T017:
+    stage: "red"
+    status: "completed"
+    scenarios: ["AS-005", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t016-t018-execution.md"
+    verification: "All 8 replay and lease cases reached the intended missing run-stream, job-lease, and worker seams; no collection or fixture failure caused RED."
+  T018:
+    stage: "green"
+    status: "completed"
+    scenarios: ["AS-004", "AS-005", "AS-007"]
+    evidence: "specs/001-walking-skeleton/evidence/t016-t018-execution.md"
+    verification: "All 15 run lifecycle, replay, lease, restart, and deletion cases plus the 217-test backend regression suite pass."
+  T019:
+    stage: "red"
+    scenarios: ["AS-001"]
+    verification: "Health and readiness tests fail."
+  T020:
+    stage: "red"
+    scenarios: ["AS-002", "AS-006", "AS-007"]
+    verification: "Isolation, allowlisted telemetry/metrics, CORS, proxy-trust, API-size, and pre-body denial tests fail."
+  T021:
+    stage: "green"
+    scenarios: ["AS-001", "AS-002", "AS-006", "AS-007"]
+    verification: "Readiness, isolation, allowlisted telemetry/metrics, CORS, proxy-trust, API-size, and pre-body denial tests pass."
+  T022:
+    stage: "red"
+    scenarios: ["AS-002", "AS-006"]
+    verification: "Web configuration, same-origin proxy, 256 KiB limit, nonced CSP, anti-frame, nosniff, and referrer-policy tests fail."
+  T023:
+    stage: "green"
+    scenarios: ["AS-002", "AS-006"]
+    verification: "Web configuration, same-origin proxy, 256 KiB limit, nonced CSP, anti-frame, nosniff, and referrer-policy tests pass."
+  T024:
+    stage: "red"
+    scenarios: ["AS-003", "AS-006", "AS-008"]
+    verification: "Decision-frame interaction tests fail."
+  T025:
+    stage: "green"
+    scenarios: ["AS-003", "AS-006", "AS-008"]
+    verification: "Decision-frame interaction tests pass."
+  T026:
+    stage: "red"
+    scenarios: ["AS-004", "AS-005", "AS-008"]
+    verification: "Run-stream, controlled-component, and seven product-owned state tests fail."
+  T027:
+    stage: "green"
+    scenarios: ["AS-004", "AS-005", "AS-008"]
+    verification: "Run-stream, controlled-component, and seven product-owned state tests pass without a new envelope kind."
+  T028:
+    stage: "red"
+    scenarios: ["AS-002", "AS-003", "AS-004", "AS-005", "AS-006", "AS-007"]
+    verification: "Browser journey fails before seed and complete wiring."
+  T029:
+    stage: "green"
+    scenarios: ["AS-002", "AS-003", "AS-004", "AS-005", "AS-006", "AS-007"]
+    verification: "Browser journey and restart recovery pass."
+  T030:
+    stage: "red"
+    scenarios: ["AS-008"]
+    verification: "Automated and manual accessibility evidence identifies any state, focus-return, reduced-motion, 200%-zoom, screen-reader, viewport, comparison, announcement, or axe failure."
+  T031:
+    stage: "green"
+    scenarios: ["AS-008"]
+    verification: "All automated and manual accessibility checks pass with zero serious or critical issue."
+  T032:
+    stage: "red"
+    scenarios: ["AS-001", "AS-004", "AS-005"]
+    verification: "Reference-Linux evaluation fails until 20 warm-up and at least 200 five-user measured turns meet every latency, 100-event replay, correlation, error, and duplicate gate."
+  T033:
+    stage: "green"
+    scenarios: ["AS-001", "AS-004", "AS-005"]
+    verification: "The complete reference-performance gate passes twice from clean data."
+  T034:
+    stage: "converge"
+    scenarios: ["AS-001", "AS-002", "AS-003", "AS-004", "AS-005", "AS-006", "AS-007", "AS-008"]
+    verification: "make check and every quickstart command pass, with no critical inconsistency remaining."
+
+roadmap_gate:
+  rule: >
+    A roadmap feature gains scenario, task, test, and evidence links only after
+    its dedicated Spec Kit specification passes clarification and planning.
+  prohibition: >
+    Roadmap mappings do not authorize implementation or reinterpret the BMAD
+    requirement.

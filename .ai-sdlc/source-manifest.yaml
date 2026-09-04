@@ -1,0 +1,276 @@
+schema_version: 1
+baseline_id: IB-002
+created_on: "2026-07-27"
+policy:
+  public_distribution: original-or-verified-license-only
+  course_material_handling: concept-synthesis-only
+  private_material: prohibited
+  credentials: prohibited
+  runtime_downloads: verify-and-pin-before-release
+
+packet_artifacts:
+  - id: SRC-PACKET-001
+    paths:
+      - "README.md"
+      - "BOOTSTRAP_PROMPT.md"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
+      - "SECURITY.md"
+      - "THIRD_PARTY_NOTICES.md"
+      - ".gitignore"
+      - ".env.example"
+    origin: project-authored-repository-and-governance-files
+    license: MIT
+    redistribution: allowed
+  - id: SRC-PACKET-002
+    paths:
+      - ".ai-sdlc/"
+      - "_bmad-output/"
+      - ".specify/memory/constitution.md"
+      - ".specify/templates/overrides/"
+      - ".specify/workflows/ai-feature-delivery/"
+      - ".specify/workflows/workflow-registry.json"
+      - "specs/"
+      - "docs/"
+    origin: project-authored-lifecycle-baseline-and-delivery-artifacts
+    license: MIT
+    redistribution: allowed
+    notes:
+      - workflow-registry-is-spec-kit-managed-metadata-with-project-registration
+      - bmad-output-documents-are-project-authored-from-vendored-framework-workflows
+  - id: SRC-PACKET-003
+    paths:
+      - ".github/workflows/bootstrap-validation.yml"
+      - "scripts/"
+      - "tests/"
+    origin: project-authored-bootstrap-verification-and-ci
+    license: MIT
+    redistribution: allowed
+  - id: SRC-PACKET-004
+    paths:
+      - "seed/sample-project/"
+    origin: original-fictional-corpus-created-for-ai-cto-cockpit
+    license: MIT
+    redistribution: allowed
+    restrictions:
+      - contains-no-real-personal-data
+      - contains-no-course-lab-assets
+      - contains-no-private-repository-content
+  - id: SRC-PACKET-005
+    paths:
+      - "evals/README.md"
+      - "evals/dataset.schema.json"
+      - "evals/seed-v0.jsonl"
+      - "evals/attack-seed-v0.jsonl"
+    origin: original-project-evaluation-fixtures
+    license: MIT
+    redistribution: allowed
+  - id: SRC-PACKET-006
+    paths:
+      - "third_party/licenses/BMAD-METHOD-LICENSE.txt"
+      - "third_party/licenses/BMAD-TEA-LICENSE.txt"
+      - "third_party/licenses/SPEC-KIT-LICENSE.txt"
+    origin: unmodified-upstream-license-texts
+    license: respective-upstream-MIT-licenses
+    redistribution: allowed
+    notes:
+      - exact-upstream-attribution-is-recorded-under-framework_references
+  - id: SRC-PACKET-007
+    paths:
+      - "Makefile"
+      - ".dockerignore"
+      - ".node-version"
+      - ".python-version"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "pyrightconfig.json"
+      - "apps/"
+      - "contracts/"
+      - "services/"
+      - "infra/"
+    origin: project-authored-runtime-tooling-and-application-skeleton
+    license: MIT
+    redistribution: allowed
+    notes:
+      - PostgreSQL-is-canonical-and-Qdrant-is-derived
+      - feature-001-excludes-retrieval-model-calls-memory-and-live-connectors
+
+learning_inputs:
+  - id: SRC-LEARN-001
+    title: Generative UI and Agentic Interfaces summary
+    source_repository_path: summaries/generative-ui-and-agentic-interfaces.md
+    standalone_resolution: informational-only
+    use: concepts-only
+    copied_content: false
+    derived_principles:
+      - controlled-components
+      - fixed-schema-comparison
+      - react-owned-authority
+  - id: SRC-LEARN-002
+    title: Agentic Memory summary
+    source_repository_path: summaries/agentic-memory.md
+    standalone_resolution: informational-only
+    use: concepts-only
+    copied_content: false
+    derived_principles:
+      - event-history
+      - typed-durable-facts
+      - confirmation-before-inferred-memory
+      - bounded-context
+  - id: SRC-LEARN-003
+    title: RAG and Vector Search summary
+    source_repository_path: summaries/rag-and-vector-search.md
+    standalone_resolution: informational-only
+    use: concepts-only
+    copied_content: false
+    derived_principles:
+      - hybrid-retrieval
+      - reranking
+      - citations
+      - evaluation
+  - id: SRC-LEARN-004
+    title: Agents and Orchestration summary
+    source_repository_path: summaries/agents-and-orchestration.md
+    standalone_resolution: informational-only
+    use: concepts-only
+    copied_content: false
+    derived_principles:
+      - explicit-workflow
+      - typed-boundaries
+      - bounded-tools
+  - id: SRC-LEARN-005
+    title: Structured LLM Workflows summary
+    source_repository_path: summaries/structured-llm-workflows.md
+    standalone_resolution: informational-only
+    use: concepts-only
+    copied_content: false
+    derived_principles:
+      - schema-validation
+      - deterministic-policy
+  - id: SRC-LEARN-006
+    title: LLM Serving and Inference summary
+    source_repository_path: summaries/llm-serving-and-inference.md
+    standalone_resolution: informational-only
+    use: concepts-only
+    copied_content: false
+    derived_principles:
+      - latency-budget
+      - cost-budget
+      - version-fingerprints
+  - id: SRC-LEARN-007
+    title: Fashion Assistant Memory experiment
+    source_repository_path: experiments/fashion-assistant-memory/
+    standalone_resolution: informational-only
+    use: concepts-and-clean-room-behavioral-tests
+    copied_content: false
+    derived_principles:
+      - system-of-record-is-not-system-of-context
+      - explicit-versus-inferred-writes
+      - hard-constraints-in-code
+      - context-priority-and-budgets
+  - id: SRC-LEARN-008
+    title: Talk to Your Data deployment experiment
+    source_repository_path: talk-to-your-data/deploy/
+    standalone_resolution: informational-only
+    use: concepts-and-clean-room-architecture
+    copied_content: false
+    derived_principles:
+      - langgraph-coordination
+      - qdrant-derived-index
+      - fastapi-service-boundary
+
+framework_references:
+  - id: SRC-FRAMEWORK-001
+    name: BMAD Method
+    version: "6.10.0"
+    repository: "https://github.com/bmad-code-org/BMAD-METHOD"
+    release: "https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.10.0"
+    source_commit: "081e64ee5aab2316b912883f7bee528ee143ce36"
+    use: lifecycle-method-and-artifact-conventions
+    vendored_engine_code: true
+    vendored_paths:
+      - "_bmad/core/"
+      - "_bmad/bmm/"
+      - "_bmad/_config/"
+      - ".agents/skills/bmad-*/"
+      - ".claude/skills/bmad-*/"
+    installer_managed_paths:
+      - "_bmad/config.toml"
+      - "_bmad/scripts/"
+    project_managed_scaffolding:
+      - "_bmad/custom/"
+    excluded_generated_adapters:
+      - bmad-agent-dev
+      - bmad-code-review
+      - bmad-correct-course
+      - bmad-create-story
+      - bmad-dev-auto
+      - bmad-dev-story
+      - bmad-qa-generate-e2e-tests
+      - bmad-quick-dev
+      - bmad-retrospective
+      - bmad-spec
+      - bmad-sprint-planning
+      - bmad-sprint-status
+    exclusion_reason: prevent a second auto-discoverable implementation loop
+    license: MIT
+    license_file: "third_party/licenses/BMAD-METHOD-LICENSE.txt"
+  - id: SRC-FRAMEWORK-002
+    name: BMAD Test Architect
+    version: "1.19.1"
+    repository: "https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise"
+    source_commit: "74cf6e6adf5a6f46614788f184f340ea58336157"
+    npm_package: "bmad-method-test-architecture-enterprise@1.19.1"
+    npm_integrity: "sha512-aZDxGqmoKtVHHj/HwhW/wDrESzxrETLrVA+u6bjQvz+ffpuZIRhNjnylVNdjmevxSVJfpWOboiQM1Cqb9JfmMw=="
+    use: risk-based-test-and-quality-gate-conventions
+    vendored_engine_code: true
+    vendored_paths:
+      - "_bmad/tea/"
+      - ".agents/skills/bmad-tea/"
+      - ".agents/skills/bmad-testarch-*/"
+      - ".claude/skills/bmad-tea/"
+      - ".claude/skills/bmad-testarch-*/"
+    license: MIT
+    license_file: "third_party/licenses/BMAD-TEA-LICENSE.txt"
+  - id: SRC-FRAMEWORK-003
+    name: GitHub Spec Kit
+    version: "0.14.2"
+    repository: "https://github.com/github/spec-kit"
+    release: "https://github.com/github/spec-kit/releases/tag/v0.14.2"
+    source_commit: "2930d06f41e3ab491ef7d111cfe7676de5ddeabd"
+    use: feature-delivery-method-and-artifact-conventions
+    vendored_engine_code: true
+    vendored_paths:
+      - ".specify/"
+      - ".agents/skills/speckit-*/"
+      - ".claude/skills/speckit-*/"
+    project_owned_overrides:
+      - ".specify/memory/constitution.md"
+      - ".specify/templates/overrides/"
+      - ".specify/workflows/ai-feature-delivery/"
+      - ".specify/workflows/workflow-registry.json"
+    license: MIT
+    license_file: "third_party/licenses/SPEC-KIT-LICENSE.txt"
+
+planned_runtime_models:
+  - id: SRC-MODEL-001
+    model: BAAI/bge-small-en-v1.5
+    use: local-dense-embedding-baseline
+    shipped_in_repository: false
+    release_requirement: pin-upstream-revision-and-verify-license
+  - id: SRC-MODEL-002
+    model: cross-encoder/ms-marco-MiniLM-L-6-v2
+    use: local-reranking-baseline
+    shipped_in_repository: false
+    release_requirement: pin-upstream-revision-and-verify-license
+
+clean_room_rules:
+  - reimplement-learned-patterns-with-project-owned-tests
+  - do-not-copy-course-notebooks-or-lab-assets
+  - do-not-publish-private-lab-exports
+  - record-origin-license-and-checksum-for-new-public-assets
+  - isolate-dataset-changes-from-model-or-prompt-changes
+  - block-release-when-redistribution-rights-are-unclear

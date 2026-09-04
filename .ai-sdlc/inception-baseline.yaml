@@ -1,0 +1,144 @@
+schema_version: 1
+baseline_id: IB-002
+project: ai-cto-cockpit
+created_on: "2026-08-01"
+supersedes: IB-001
+change_request: docs/changes/CR-001-bounded-reset-replay-receipt.md
+state: accepted-for-specification
+readiness_verdict: PASS
+application_status: feature-001-in-progress-through-t009
+
+intent:
+  primary_user: technical-founder-or-hands-on-engineering-leader
+  core_job: evidence-backed-architecture-decision
+  public_demo: original-synthetic-two-decision-journey
+  local_profile: local-canonical-storage-with-disclosed-remote-inference
+
+authority:
+  inception: bmad-method
+  feature_delivery: github-spec-kit
+  duplicate_implementation_loops: prohibited
+  workflow: .ai-sdlc/WORKFLOW.md
+
+toolchain:
+  lock_file: .ai-sdlc/toolchain.lock.yaml
+  bmad_method: "6.10.0"
+  bmad_tea: "1.19.1"
+  github_spec_kit: "0.14.2"
+
+scope:
+  functional_requirements:
+    - FR-001
+    - FR-002
+    - FR-003
+    - FR-004
+    - FR-005
+    - FR-006
+    - FR-007
+    - FR-008
+    - FR-009
+    - FR-010
+    - FR-011
+    - FR-012
+  non_functional_requirements:
+    - NFR-001
+    - NFR-002
+    - NFR-003
+    - NFR-004
+    - NFR-005
+    - NFR-006
+    - NFR-007
+    - NFR-008
+    - NFR-009
+    - NFR-010
+    - NFR-011
+    - NFR-012
+  epics:
+    - EPIC-001
+    - EPIC-002
+    - EPIC-003
+    - EPIC-004
+    - EPIC-005
+    - EPIC-006
+  quality_gates:
+    - QUALITY-RET-001
+    - QUALITY-RET-002
+    - QUALITY-GRD-001
+    - QUALITY-REC-001
+    - QUALITY-MEM-001
+    - QUALITY-UI-001
+    - QUALITY-SEC-001
+    - QUALITY-PERF-001
+    - QUALITY-COST-001
+    - QUALITY-OPS-001
+
+change_control:
+  feature_local: update-active-spec-kit-feature-and-rerun-analysis
+  cross_cutting: create-numbered-bmad-baseline-change-and-rerun-readiness
+  cross_cutting_triggers:
+    - persona-or-product-outcome
+    - deployment-profile
+    - data-egress
+    - ui-authority
+    - canonical-storage-ownership
+    - consequential-action
+    - blocking-quality-threshold
+
+artifacts:
+  - path: .ai-sdlc/WORKFLOW.md
+    owner: lifecycle-governance
+    sha256: a88c7430c1affc6624f768ff3d571f8e5cca7c0bd5fb15d3e5eba6b7181e07d7
+  - path: .ai-sdlc/toolchain.lock.yaml
+    owner: lifecycle-governance
+    sha256: 56634cc2e9b2a93fb08bca66141f00aa4438cb52403baeadfbf3c923ba01e101
+  - path: .ai-sdlc/source-manifest.yaml
+    owner: provenance-governance
+    sha256: 3d8645ce1d7cee7e40399c4a7c646c3409b28eadba51e893a661a8a05c6961ea
+  - path: .ai-sdlc/baselines/IB-001.yaml
+    owner: lifecycle-governance-archive
+    sha256: 2246de84131c55fcc0b16d16913c5c3d0d41233a5e31bd002680ef21d97e2580
+  - path: .specify/memory/constitution.md
+    owner: github-spec-kit-governance
+    sha256: 379f542f1a929430246c86e98c7be304f8f37969d18ad49a3e0be0b48dd96767
+  - path: docs/changes/CR-001-bounded-reset-replay-receipt.md
+    owner: lifecycle-governance-change-control
+    sha256: 69c2cba8690fab7edcb3bd9eb573f5097cf7a562ca4bfaeb081bfdd454d07fad
+  - path: _bmad-output/project-context.md
+    owner: bmad-method
+    sha256: 384b41a84878a84bfe2298bbbb6185f8ea227a33714056e0196f208f4ecd0c1c
+  - path: _bmad-output/planning-artifacts/product-brief.md
+    owner: bmad-method
+    sha256: f2c80393afcc83f45fca449cbc71c7bfbe6df934cb6c68bc75e0f46981eb0b1b
+  - path: _bmad-output/planning-artifacts/prd.md
+    owner: bmad-method
+    sha256: a9d5fa2e49521957da1325aa81645d50ac41b8717a497eed681f0f3c9147406e
+  - path: _bmad-output/planning-artifacts/DESIGN.md
+    owner: bmad-method
+    sha256: a33bbbb5446cb49d69e329bfc4e051358f98f5cc4296bcca96613dbdb1357ccb
+  - path: _bmad-output/planning-artifacts/EXPERIENCE.md
+    owner: bmad-method
+    sha256: 4a0c095a2adf465f3964118285b7c281cad27270401a9afd42177cbafbf85509
+  - path: _bmad-output/planning-artifacts/ARCHITECTURE-SPINE.md
+    owner: bmad-method
+    sha256: cff115d33a6aa1b15720b30eb44eff0a97d77ee7dd60350ca45559418d7d0c54
+  - path: _bmad-output/planning-artifacts/epics.md
+    owner: bmad-method
+    sha256: 8e128c6c708291de8ec235155ffdb94a1606294f05af2df89287b02e089443f5
+  - path: _bmad-output/planning-artifacts/implementation-readiness.md
+    owner: bmad-method
+    sha256: ce43fd35d2aaaf09d5f86e282e362fb71020b46b6e4147b7467cb802ec2ff6d3
+  - path: _bmad-output/test-artifacts/system-test-design.md
+    owner: bmad-test-architect
+    sha256: 99f6a829a8001f11a7c728950b1afb673471090e06fbba350318bef8828eedba
+  - path: _bmad-output/test-artifacts/ai-quality-contract.md
+    owner: bmad-test-architect-and-project
+    sha256: 9a33316e00ea16441ad5b65e639936752afa0c6b8da025fb12bebe8cca57127a
+
+handoff:
+  first_epic: EPIC-001
+  first_feature: 001-walking-skeleton
+  entry_conditions:
+    - bootstrap-verifier-passes-in-clean-copy
+    - spec-kit-analysis-has-no-critical-mismatch
+    - first-production-behavior-starts-with-failing-acceptance-test
+  reopen_bmad_when: cross-cutting-change-triggered

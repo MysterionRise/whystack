@@ -1,0 +1,59 @@
+schema_version: "0.1.0"
+fixture_id: northstar-relay
+title: Northstar Relay synthetic project
+description: Original, fictional evidence for the public AI CTO Cockpit demo.
+license: MIT
+created_at: "2026-07-27"
+workspace_id: seed-public
+integrity: calculated_at_ingest
+artifacts:
+  - id: project-brief
+    path: project-brief.md
+    media_type: text/markdown
+    source_kind: authored_fixture
+    captured_at: "2026-07-01"
+  - id: architecture-constraints
+    path: architecture-constraints.md
+    media_type: text/markdown
+    source_kind: authored_fixture
+    captured_at: "2026-07-02"
+  - id: team-profile
+    path: team-profile.md
+    media_type: text/markdown
+    source_kind: authored_fixture
+    captured_at: "2026-07-03"
+  - id: repository-readme
+    path: repository-snapshot/README.md
+    media_type: text/markdown
+    source_kind: repository_snapshot
+    captured_at: "2026-07-10"
+  - id: repository-deployment
+    path: repository-snapshot/deployment.yaml
+    media_type: application/yaml
+    source_kind: repository_snapshot
+    captured_at: "2026-07-10"
+  - id: decision-policy
+    path: repository-snapshot/decision-policy.md
+    media_type: text/markdown
+    source_kind: repository_snapshot
+    captured_at: "2026-07-10"
+  - id: github-issues
+    path: github-snapshot/issues.json
+    media_type: application/json
+    source_kind: github_snapshot
+    captured_at: "2026-07-20T10:00:00Z"
+  - id: github-pull-requests
+    path: github-snapshot/pull-requests.json
+    media_type: application/json
+    source_kind: github_snapshot
+    captured_at: "2026-07-20T10:00:00Z"
+  - id: web-vector-options
+    path: web-snapshots/vector-options.md
+    media_type: text/markdown
+    source_kind: web_snapshot
+    captured_at: "2026-07-15"
+  - id: web-runtime-options
+    path: web-snapshots/runtime-options.md
+    media_type: text/markdown
+    source_kind: web_snapshot
+    captured_at: "2026-07-16"

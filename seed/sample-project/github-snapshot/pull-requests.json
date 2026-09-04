@@ -1,0 +1,33 @@
+{
+  "repository": "northstar-relay/synthetic-app",
+  "captured_at": "2026-07-20T10:00:00Z",
+  "pull_requests": [
+    {
+      "number": 42,
+      "title": "Prototype a Postgres-backed worker lease",
+      "state": "merged",
+      "merged_at": "2026-07-12T16:20:00Z",
+      "summary": "Adds idempotent job claims using FOR UPDATE SKIP LOCKED and reclaims expired sixty-second leases.",
+      "checks": [
+        "three restart tests passed",
+        "duplicate outcome writes remained zero",
+        "sustained 250 jobs per hour on the pilot fixture"
+      ],
+      "review": "Approved for pilot scale. Revisit when measured throughput or isolation requirements exceed this design."
+    },
+    {
+      "number": 47,
+      "title": "Evaluate StreamForge broker",
+      "state": "closed",
+      "merged_at": null,
+      "summary": "A broker prototype sustained 5000 jobs per hour but introduced three services, a separate backup path, and an estimated GBP 260 monthly pilot cost.",
+      "checks": [
+        "throughput target exceeded",
+        "restore runbook incomplete",
+        "local arm64 image unavailable"
+      ],
+      "review": "Closed without merge because pilot throughput does not justify the operational and cost increase."
+    }
+  ]
+}
+

@@ -1,4 +1,10 @@
 packages:
   - "apps/*"
-  - "packages/*"
-  - "services/*"
+
+# Repository policy forbids executing downloaded dependency scripts.
+ignoreScripts: true
+
+allowBuilds:
+  "@scarf/scarf": false
+  sharp: false
+  unrs-resolver: false
