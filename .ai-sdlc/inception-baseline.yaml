@@ -6,7 +6,7 @@ supersedes: IB-001
 change_request: docs/changes/CR-001-bounded-reset-replay-receipt.md
 state: accepted-for-specification
 readiness_verdict: PASS
-application_status: feature-001-in-progress-through-t009
+application_status: feature-001-in-progress-through-t018
 
 intent:
   primary_user: technical-founder-or-hands-on-engineering-leader
