@@ -1,9 +1,6 @@
-# AI CTO Cockpit
+# whystack
 
-AI CTO Cockpit is a portfolio-grade, evidence-backed architecture decision
-workspace. It helps a technical founder frame a decision, inspect relevant
-project evidence, compare viable options, record an outcome, and see how that
-outcome changes a later recommendation.
+whystack is a workspace for architecture decisions: frame the decision, cite evidence, compare options, record an ADR.
 
 This repository is the active implementation workspace. BMAD owns the accepted
 product, experience, architecture, and quality baseline; Spec Kit owns every
