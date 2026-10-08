@@ -1,5 +1,5 @@
 {
-  "name": "@ai-cto-cockpit/web",
+  "name": "@whystack/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
